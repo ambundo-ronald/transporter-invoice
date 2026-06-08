@@ -1,0 +1,10 @@
+*.py[cod]
+__pycache__/
+.bench/
+.coverage
+.env
+.idea/
+.pytest_cache/
+.ruff_cache/
+.vscode/
+node_modules/

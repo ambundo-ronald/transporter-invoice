@@ -1,0 +1,98 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:company",
+ "creation": "2026-06-08 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "sales_item",
+  "purchase_item",
+  "invoice_section",
+  "sales_cost_center",
+  "purchase_cost_center",
+  "auto_submit_invoices"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "set_only_once": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "sales_item",
+   "fieldtype": "Link",
+   "label": "Customer Transport Service Item",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "purchase_item",
+   "fieldtype": "Link",
+   "label": "Transporter Service Item",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "invoice_section",
+   "fieldtype": "Section Break",
+   "label": "Invoice Defaults"
+  },
+  {
+   "fieldname": "sales_cost_center",
+   "fieldtype": "Link",
+   "label": "Sales Cost Center",
+   "options": "Cost Center"
+  },
+  {
+   "fieldname": "purchase_cost_center",
+   "fieldtype": "Link",
+   "label": "Purchase Cost Center",
+   "options": "Cost Center"
+  },
+  {
+   "default": "0",
+   "description": "Submit generated invoices immediately. Leave disabled if invoices require review.",
+   "fieldname": "auto_submit_invoices",
+   "fieldtype": "Check",
+   "label": "Auto Submit Invoices"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-08 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Transport Invoicing",
+ "name": "Transport Invoice Settings",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

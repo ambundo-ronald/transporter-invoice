@@ -1,0 +1,12 @@
+include README.md
+recursive-include transporter_invoice *.css
+recursive-include transporter_invoice *.csv
+recursive-include transporter_invoice *.html
+recursive-include transporter_invoice *.ico
+recursive-include transporter_invoice *.js
+recursive-include transporter_invoice *.json
+recursive-include transporter_invoice *.md
+recursive-include transporter_invoice *.png
+recursive-include transporter_invoice *.py
+recursive-include transporter_invoice *.svg
+recursive-include transporter_invoice *.txt

@@ -1,0 +1,214 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:TD-{company_abbr}-{delivery_date}-{#####}",
+ "creation": "2026-06-08 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "company_abbr",
+  "delivery_date",
+  "customer",
+  "transporter",
+  "delivery_section",
+  "route",
+  "capacity_tonnes",
+  "vehicle_registration",
+  "delivery_reference",
+  "proof_of_delivery",
+  "rate_section",
+  "rate_card",
+  "rate_row",
+  "customer_rate",
+  "transporter_rate",
+  "margin",
+  "invoice_section",
+  "sales_invoice",
+  "purchase_invoice",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "company.abbr",
+   "fieldname": "company_abbr",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Company Abbreviation",
+   "read_only": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "delivery_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Delivery Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "description": "Driver or vehicle owner represented as an ERPNext Supplier.",
+   "fieldname": "transporter",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Transporter",
+   "options": "Supplier",
+   "reqd": 1
+  },
+  {
+   "fieldname": "delivery_section",
+   "fieldtype": "Section Break",
+   "label": "Delivery"
+  },
+  {
+   "fieldname": "route",
+   "fieldtype": "Data",
+   "label": "Route"
+  },
+  {
+   "fieldname": "capacity_tonnes",
+   "fieldtype": "Float",
+   "label": "Capacity (Tonnes)",
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "fieldname": "vehicle_registration",
+   "fieldtype": "Data",
+   "label": "Vehicle Registration"
+  },
+  {
+   "fieldname": "delivery_reference",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Delivery Reference",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "proof_of_delivery",
+   "fieldtype": "Attach",
+   "label": "Proof of Delivery"
+  },
+  {
+   "fieldname": "rate_section",
+   "fieldtype": "Section Break",
+   "label": "Applied Rate"
+  },
+  {
+   "fieldname": "rate_card",
+   "fieldtype": "Link",
+   "label": "Rate Card",
+   "options": "Transport Rate Card",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rate_row",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Rate Row",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer_rate",
+   "fieldtype": "Currency",
+   "label": "Customer Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "transporter_rate",
+   "fieldtype": "Currency",
+   "label": "Transporter Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "margin",
+   "fieldtype": "Currency",
+   "label": "Margin",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoice_section",
+   "fieldtype": "Section Break",
+   "label": "Invoices"
+  },
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "label": "Sales Invoice",
+   "no_copy": 1,
+   "options": "Sales Invoice",
+   "read_only": 1
+  },
+  {
+   "fieldname": "purchase_invoice",
+   "fieldtype": "Link",
+   "label": "Purchase Invoice",
+   "no_copy": 1,
+   "options": "Purchase Invoice",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-06-08 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Transport Invoicing",
+ "name": "Transport Delivery",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "delivery_date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "delivery_reference",
+ "track_changes": 1
+}
