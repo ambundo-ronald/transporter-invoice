@@ -2,12 +2,32 @@
 
 ERPNext/Frappe v16 app for company-scoped transport billing.
 
-The app keeps an effective-dated rate card for vehicle capacities below 10 tonnes.
-A submitted Transport Delivery freezes the applicable customer and transporter
-rates and can create:
+The app uses a spreadsheet-style transport matrix:
 
-- a Sales Invoice for the customer rate; and
-- a Purchase Invoice for the transporter rate.
+- distance band
+- locations covered
+- customer rates for `10 MT`, `14 MT`, and `Trailer`
+- transporter rates for `10-13 MT`, `14-17 MT`, and `28 MT`
+
+Each **Transport Delivery** is one trip. The delivery stores the destination, truck
+class, actual weight, selected customer rate, selected transporter rate, customer amount,
+transporter amount, and margin.
+
+## Monthly Billing Model
+
+Use this flow when the customer is billed once per month:
+
+1. Create one **Transport Delivery** for every trip.
+2. Submit the delivery after proof of delivery is attached.
+3. Create a **Purchase Invoice** from each delivery when you need to pay the rider,
+   driver, or vehicle owner.
+4. At month end, create a **Transport Billing Batch** for the customer and period.
+5. Click **Get Unbilled Deliveries** to pull all submitted trips not yet billed to the customer.
+6. Submit the batch.
+7. Click **Create Sales Invoice** to create one customer invoice with one line per trip.
+
+The generated Sales Invoice is written back to every included Transport Delivery, so the
+same trip cannot be billed to the customer twice.
 
 ## Installation
 
@@ -19,27 +39,16 @@ bench --site your-site install-app transporter_invoice
 bench --site your-site migrate
 ```
 
-## Initial setup
+## Initial Setup
 
 1. Create non-stock service Items for customer transport income and transporter cost.
 2. Create one **Transport Invoice Settings** record for the target company.
-3. Create and submit a **Transport Rate Card** with effective dates and rate rows.
-4. Create a **Transport Delivery**, fetch the rate, attach proof of delivery, and submit it.
-5. Use **Create Both Invoices** from the submitted delivery.
+3. Create and submit a **Transport Rate Card** with effective dates and route matrix rows.
 
-The initial below-10-tonne rate rows from the supplied image are:
-
-| Capacity | Customer rate | Transporter rate | Margin |
-| ---: | ---: | ---: | ---: |
-| 1.5 | 7,800 | 6,100 | 1,700 |
-| 3.0 | 8,200 | 6,800 | 1,400 |
-| 5.0 | 11,200 | 8,800 | 2,400 |
-| 7.0 | 12,500 | 10,000 | 2,500 |
-
-Create a separate card when rates change. The delivery date determines which submitted
-card applies, and the selected values are copied onto the delivery for historical accuracy.
+The delivery date determines which submitted rate card applies, and the selected values
+are copied onto each delivery for historical accuracy.
 
 Only one Transport Invoice Settings record is allowed. Its Company becomes the enabled
-organization for the whole app; rate cards and deliveries for every other ERPNext company
-are rejected. Generated invoices and configured cost centers are also validated against
-that enabled company.
+organization for the whole app; rate cards, deliveries, and billing batches for every
+other ERPNext company are rejected. Generated invoices and configured cost centers are
+also validated against that enabled company.

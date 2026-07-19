@@ -12,19 +12,26 @@
   "customer",
   "transporter",
   "delivery_section",
-  "route",
-  "capacity_tonnes",
+  "destination",
+  "truck_class",
+  "actual_weight_kg",
   "vehicle_registration",
   "delivery_reference",
   "proof_of_delivery",
   "rate_section",
   "rate_card",
   "rate_row",
+  "distance_band",
+  "rate_unit",
   "customer_rate",
   "transporter_rate",
+  "amount_section",
+  "customer_amount",
+  "transporter_amount",
   "margin",
   "invoice_section",
   "sales_invoice",
+  "billing_batch",
   "purchase_invoice",
   "notes"
  ],
@@ -76,14 +83,26 @@
    "label": "Delivery"
   },
   {
-   "fieldname": "route",
+   "description": "Enter the location exactly as listed in the rate matrix, for example Thika Town or Mombasa.",
+   "fieldname": "destination",
    "fieldtype": "Data",
-   "label": "Route"
+   "in_list_view": 1,
+   "label": "Destination",
+   "reqd": 1
   },
   {
-   "fieldname": "capacity_tonnes",
+   "fieldname": "truck_class",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Truck Class",
+   "options": "10 MT\n14 MT\nTrailer",
+   "reqd": 1
+  },
+  {
+   "description": "Used as invoice quantity when the rate card is priced per kilogram.",
+   "fieldname": "actual_weight_kg",
    "fieldtype": "Float",
-   "label": "Capacity (Tonnes)",
+   "label": "Actual Weight (Kg)",
    "precision": "2",
    "reqd": 1
   },
@@ -108,7 +127,7 @@
   {
    "fieldname": "rate_section",
    "fieldtype": "Section Break",
-   "label": "Applied Rate"
+   "label": "Applied Matrix Rate"
   },
   {
    "fieldname": "rate_card",
@@ -125,15 +144,48 @@
    "read_only": 1
   },
   {
+   "fieldname": "distance_band",
+   "fieldtype": "Data",
+   "label": "Distance",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rate_unit",
+   "fieldtype": "Data",
+   "label": "Rate Unit",
+   "read_only": 1
+  },
+  {
    "fieldname": "customer_rate",
    "fieldtype": "Currency",
    "label": "Customer Rate",
+   "precision": "4",
    "read_only": 1
   },
   {
    "fieldname": "transporter_rate",
    "fieldtype": "Currency",
    "label": "Transporter Rate",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_section",
+   "fieldtype": "Section Break",
+   "label": "Calculated Amounts"
+  },
+  {
+   "fieldname": "customer_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Customer Invoice Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "transporter_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Transporter Invoice Amount",
    "read_only": 1
   },
   {
@@ -156,6 +208,14 @@
    "read_only": 1
   },
   {
+   "fieldname": "billing_batch",
+   "fieldtype": "Link",
+   "label": "Billing Batch",
+   "no_copy": 1,
+   "options": "Transport Billing Batch",
+   "read_only": 1
+  },
+  {
    "fieldname": "purchase_invoice",
    "fieldtype": "Link",
    "label": "Purchase Invoice",
@@ -172,7 +232,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-08 00:00:00.000000",
+ "modified": "2026-06-09 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Transport Invoicing",
  "name": "Transport Delivery",

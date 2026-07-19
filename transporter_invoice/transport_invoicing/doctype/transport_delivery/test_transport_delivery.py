@@ -2,26 +2,38 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, nowdate
 
+
 class TestTransportDelivery(FrappeTestCase):
-	def test_capacity_at_or_above_ten_is_rejected(self):
+	def test_delivery_requires_valid_truck_class(self):
 		delivery = frappe.new_doc("Transport Delivery")
-		delivery.capacity_tonnes = 10
+		delivery.truck_class = "7 MT"
+		delivery.actual_weight_kg = 1000
 
 		with self.assertRaises(frappe.ValidationError):
-			delivery._validate_capacity()
+			delivery._validate_delivery_details()
 
-	def test_rate_card_rejects_duplicate_capacity(self):
+	def test_rate_card_rejects_duplicate_location(self):
 		card = frappe.new_doc("Transport Rate Card")
 		card.company = "_Test Company"
 		card.customer = "_Test Customer"
 		card.effective_from = add_days(nowdate(), 1000)
 		card.append(
 			"rates",
-			{"capacity_tonnes": 3, "customer_rate": 8200, "transporter_rate": 6800},
+			{
+				"distance_band": "0-25 KMs",
+				"location": "Thika Town",
+				"customer_10mt_rate": 1.05,
+				"transporter_10_13mt_rate": 0.84,
+			},
 		)
 		card.append(
 			"rates",
-			{"capacity_tonnes": 3, "customer_rate": 8500, "transporter_rate": 7000},
+			{
+				"distance_band": "0-25 KMs",
+				"location": "thika town",
+				"customer_10mt_rate": 1.05,
+				"transporter_10_13mt_rate": 0.84,
+			},
 		)
 
 		with self.assertRaises(frappe.ValidationError):

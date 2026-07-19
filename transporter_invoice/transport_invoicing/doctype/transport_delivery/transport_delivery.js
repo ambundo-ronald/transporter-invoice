@@ -1,21 +1,9 @@
 frappe.ui.form.on("Transport Delivery", {
 	refresh(frm) {
-		set_rate_card_query(frm);
-
 		if (frm.doc.docstatus !== 1) {
 			return;
 		}
 
-		if (!frm.doc.sales_invoice && !frm.doc.purchase_invoice) {
-			frm.add_custom_button(__("Create Both Invoices"), () => {
-				call_invoice_method(frm, "create_both_invoices");
-			}, __("Create"));
-		}
-		if (!frm.doc.sales_invoice) {
-			frm.add_custom_button(__("Sales Invoice"), () => {
-				call_invoice_method(frm, "create_sales_invoice");
-			}, __("Create"));
-		}
 		if (!frm.doc.purchase_invoice) {
 			frm.add_custom_button(__("Purchase Invoice"), () => {
 				call_invoice_method(frm, "create_purchase_invoice");
@@ -23,39 +11,24 @@ frappe.ui.form.on("Transport Delivery", {
 		}
 	},
 
-	company(frm) {
-		clear_applied_rate(frm);
-	},
-	customer(frm) {
-		clear_applied_rate(frm);
-	},
-	delivery_date(frm) {
-		clear_applied_rate(frm);
-	},
-	route(frm) {
-		clear_applied_rate(frm);
-	},
-	capacity_tonnes(frm) {
-		clear_applied_rate(frm);
-	},
+	company: clear_applied_rate,
+	customer: clear_applied_rate,
+	delivery_date: clear_applied_rate,
+	destination: clear_applied_rate,
+	truck_class: clear_applied_rate,
+	actual_weight_kg: clear_applied_rate,
 });
-
-function set_rate_card_query(frm) {
-	frm.set_query("rate_card", () => ({
-		filters: {
-			company: frm.doc.company,
-			customer: frm.doc.customer,
-			docstatus: 1,
-		},
-	}));
-}
 
 function clear_applied_rate(frm) {
 	frm.set_value({
 		rate_card: null,
 		rate_row: null,
+		distance_band: null,
+		rate_unit: null,
 		customer_rate: 0,
 		transporter_rate: 0,
+		customer_amount: 0,
+		transporter_amount: 0,
 		margin: 0,
 	});
 }

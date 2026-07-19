@@ -5,51 +5,84 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "capacity_tonnes",
-  "customer_rate",
-  "transporter_rate",
-  "margin"
+  "distance_band",
+  "location",
+  "customer_10mt_rate",
+  "customer_14mt_rate",
+  "customer_trailer_rate",
+  "transporter_10_13mt_rate",
+  "transporter_14_17mt_rate",
+  "transporter_28mt_rate"
  ],
  "fields": [
   {
-   "fieldname": "capacity_tonnes",
-   "fieldtype": "Float",
+   "columns": 2,
+   "fieldname": "distance_band",
+   "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Capacity (Tonnes)",
-   "precision": "2",
+   "label": "Distance",
    "reqd": 1
   },
   {
-   "fieldname": "customer_rate",
-   "fieldtype": "Currency",
+   "columns": 3,
+   "fieldname": "location",
+   "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Customer Rate",
+   "label": "Location Covered",
    "reqd": 1
   },
   {
-   "fieldname": "transporter_rate",
+   "columns": 2,
+   "fieldname": "customer_10mt_rate",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Transporter Rate",
-   "reqd": 1
+   "label": "Customer 10MT"
   },
   {
-   "fieldname": "margin",
+   "columns": 2,
+   "fieldname": "customer_14mt_rate",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Margin",
-   "read_only": 1
+   "label": "Customer 14MT"
+  },
+  {
+   "columns": 2,
+   "fieldname": "customer_trailer_rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Customer Trailer"
+  },
+  {
+   "columns": 2,
+   "fieldname": "transporter_10_13mt_rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Transporter 10-13MT"
+  },
+  {
+   "columns": 2,
+   "fieldname": "transporter_14_17mt_rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Transporter 14-17MT"
+  },
+  {
+   "columns": 2,
+   "fieldname": "transporter_28mt_rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Transporter 28MT"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-06-08 00:00:00.000000",
+ "modified": "2026-06-09 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Transport Invoicing",
  "name": "Transport Rate",
  "owner": "Administrator",
  "permissions": [],
- "sort_field": "modified",
- "sort_order": "DESC",
+ "sort_field": "idx",
+ "sort_order": "ASC",
  "states": []
 }

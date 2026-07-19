@@ -4,11 +4,18 @@ from frappe.model.document import Document
 from frappe.utils import flt, getdate
 
 
+TRUCK_RATE_FIELDS = {
+	"10 MT": ("customer_10mt_rate", "transporter_10_13mt_rate"),
+	"14 MT": ("customer_14mt_rate", "transporter_14_17mt_rate"),
+	"Trailer": ("customer_trailer_rate", "transporter_28mt_rate"),
+}
+
+
 class TransportDelivery(Document):
 	def validate(self):
-		self.route = (self.route or "").strip()
+		self.destination = (self.destination or "").strip()
 		self._validate_configured_company()
-		self._validate_capacity()
+		self._validate_delivery_details()
 		self._validate_parties()
 		self._apply_rate()
 		self._validate_linked_invoices()
@@ -33,10 +40,11 @@ class TransportDelivery(Document):
 				)
 			)
 
-	def _validate_capacity(self):
-		capacity = flt(self.capacity_tonnes, 2)
-		if capacity <= 0 or capacity >= 10:
-			frappe.throw(_("This rate workflow only supports capacities below 10 tonnes."))
+	def _validate_delivery_details(self):
+		if self.truck_class not in TRUCK_RATE_FIELDS:
+			frappe.throw(_("Select a valid truck class."))
+		if flt(self.actual_weight_kg) <= 0:
+			frappe.throw(_("Actual Weight (Kg) must be greater than zero."))
 
 	def _validate_configured_company(self):
 		configured_company = frappe.db.get_value("Transport Invoice Settings", {}, "company")
@@ -63,14 +71,20 @@ class TransportDelivery(Document):
 			company=self.company,
 			customer=self.customer,
 			delivery_date=self.delivery_date,
-			capacity_tonnes=self.capacity_tonnes,
-			route=self.route,
+			destination=self.destination,
+			truck_class=self.truck_class,
 		)
 		self.rate_card = rate.rate_card
 		self.rate_row = rate.rate_row
+		self.distance_band = rate.distance_band
+		self.rate_unit = rate.rate_unit
 		self.customer_rate = rate.customer_rate
 		self.transporter_rate = rate.transporter_rate
-		self.margin = flt(rate.customer_rate) - flt(rate.transporter_rate)
+
+		quantity = flt(self.actual_weight_kg) if rate.rate_unit == "Per Kg" else 1
+		self.customer_amount = quantity * flt(rate.customer_rate)
+		self.transporter_amount = quantity * flt(rate.transporter_rate)
+		self.margin = flt(self.customer_amount) - flt(self.transporter_amount)
 
 	def _validate_linked_invoices(self):
 		for doctype, invoice_name in (
@@ -92,9 +106,11 @@ class TransportDelivery(Document):
 
 
 @frappe.whitelist()
-def get_applicable_rate(company, customer, delivery_date, capacity_tonnes, route=None):
-	if not all((company, customer, delivery_date, capacity_tonnes)):
-		frappe.throw(_("Company, customer, delivery date, and capacity are required."))
+def get_applicable_rate(company, customer, delivery_date, destination, truck_class):
+	if not all((company, customer, delivery_date, destination, truck_class)):
+		frappe.throw(
+			_("Company, customer, delivery date, destination, and truck class are required.")
+		)
 
 	configured_company = frappe.db.get_value("Transport Invoice Settings", {}, "company")
 	if not configured_company:
@@ -105,70 +121,78 @@ def get_applicable_rate(company, customer, delivery_date, capacity_tonnes, route
 				frappe.bold(configured_company)
 			)
 		)
+	if truck_class not in TRUCK_RATE_FIELDS:
+		frappe.throw(_("Select a valid truck class."))
 
-	capacity = flt(capacity_tonnes, 2)
-	if capacity <= 0 or capacity >= 10:
-		frappe.throw(_("This rate workflow only supports capacities below 10 tonnes."))
-
-	card_filters = {
-		"company": company,
-		"customer": customer,
-		"docstatus": 1,
-		"effective_from": ["<=", getdate(delivery_date)],
-	}
 	cards = frappe.get_list(
 		"Transport Rate Card",
-		filters=card_filters,
+		filters={
+			"company": company,
+			"customer": customer,
+			"docstatus": 1,
+			"effective_from": ["<=", getdate(delivery_date)],
+		},
 		or_filters=[
 			["effective_to", "is", "not set"],
 			["effective_to", ">=", getdate(delivery_date)],
 		],
-		fields=["name", "route", "effective_from"],
+		fields=["name", "rate_unit", "effective_from"],
 		order_by="effective_from desc",
 	)
 
-	route = (route or "").strip()
-	matching_cards = [
-		card for card in cards if (card.route or "").strip() == route
-	]
-	if not matching_cards and route:
-		matching_cards = [card for card in cards if not (card.route or "").strip()]
-
-	for card in matching_cards:
-		rate = frappe.db.get_value(
+	destination_key = destination.strip().casefold()
+	customer_field, transporter_field = TRUCK_RATE_FIELDS[truck_class]
+	for card in cards:
+		rows = frappe.get_all(
 			"Transport Rate",
-			{
-				"parent": card.name,
-				"parenttype": "Transport Rate Card",
-				"capacity_tonnes": capacity,
-			},
-			["name", "customer_rate", "transporter_rate"],
-			as_dict=True,
+			filters={"parent": card.name, "parenttype": "Transport Rate Card"},
+			fields=[
+				"name",
+				"distance_band",
+				"location",
+				customer_field,
+				transporter_field,
+			],
+			order_by="idx asc",
 		)
-		if rate:
+		for row in rows:
+			if (row.location or "").strip().casefold() != destination_key:
+				continue
+
+			customer_rate = flt(row.get(customer_field))
+			transporter_rate = flt(row.get(transporter_field))
+			if not customer_rate or not transporter_rate:
+				frappe.throw(
+					_("Rates for {0} and {1} are missing on rate card {2}.").format(
+						frappe.bold(destination),
+						frappe.bold(truck_class),
+						frappe.bold(card.name),
+					)
+				)
 			return frappe._dict(
 				rate_card=card.name,
-				rate_row=rate.name,
-				customer_rate=rate.customer_rate,
-				transporter_rate=rate.transporter_rate,
+				rate_row=row.name,
+				distance_band=row.distance_band,
+				rate_unit=card.rate_unit,
+				customer_rate=customer_rate,
+				transporter_rate=transporter_rate,
 			)
 
 	frappe.throw(
-		_(
-			"No submitted rate was found for company {0}, customer {1}, delivery date {2}, "
-			"route {3}, and capacity {4} tonnes."
-		).format(
-			frappe.bold(company),
-			frappe.bold(customer),
+		_("No submitted rate was found for {0}, {1}, on {2}.").format(
+			frappe.bold(destination),
+			frappe.bold(truck_class),
 			frappe.bold(delivery_date),
-			frappe.bold(route or "General"),
-			frappe.bold(capacity),
 		)
 	)
 
 
 @frappe.whitelist()
 def create_sales_invoice(delivery_name):
+	"""Create a one-off customer invoice.
+
+	For monthly billing, use Transport Billing Batch instead.
+	"""
 	return _create_invoice(delivery_name, "Sales Invoice")
 
 
@@ -188,7 +212,6 @@ def create_both_invoices(delivery_name):
 
 
 def _create_invoice(delivery_name, invoice_doctype):
-	# Serialize invoice creation for this delivery so concurrent clicks cannot create duplicates.
 	frappe.db.sql(
 		"select name from `tabTransport Delivery` where name = %s for update",
 		delivery_name,
@@ -231,6 +254,7 @@ def _create_invoice(delivery_name, invoice_doctype):
 	rate = delivery.customer_rate if is_sales else delivery.transporter_rate
 	party_field = "customer" if is_sales else "supplier"
 	party = delivery.customer if is_sales else delivery.transporter
+	quantity = flt(delivery.actual_weight_kg) if delivery.rate_unit == "Per Kg" else 1
 
 	invoice = frappe.new_doc(invoice_doctype)
 	invoice.company = delivery.company
@@ -244,15 +268,16 @@ def _create_invoice(delivery_name, invoice_doctype):
 		"items",
 		{
 			"item_code": item_code,
-			"qty": 1,
+			"qty": quantity,
 			"rate": rate,
 			"description": _(
-				"Transport delivery {0}; {1} tonnes; vehicle {2}; route {3}"
+				"Transport to {0}; distance {1}; truck {2}; weight {3} Kg; vehicle {4}"
 			).format(
-				delivery.delivery_reference,
-				delivery.capacity_tonnes,
+				delivery.destination,
+				delivery.distance_band,
+				delivery.truck_class,
+				delivery.actual_weight_kg,
 				delivery.vehicle_registration or "-",
-				delivery.route or "General",
 			),
 			"cost_center": cost_center,
 		},
