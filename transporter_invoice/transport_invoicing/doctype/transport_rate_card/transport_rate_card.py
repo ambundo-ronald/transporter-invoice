@@ -88,17 +88,20 @@ class TransportRateCard(Document):
 			"Transport Rate Card",
 			filters={
 				"company": self.company,
-				"customer": self.customer,
 				"docstatus": ["<", 2],
 				"name": ["!=", self.name],
 				"effective_from": ["<=", self.effective_to or "9999-12-31"],
 			},
-			fields=["name", "effective_to"],
+			fields=["name", "customer", "transporter", "effective_to"],
 		)
 		for card in candidates:
+			if (card.customer or "") != (self.customer or ""):
+				continue
+			if (card.transporter or "") != (self.transporter or ""):
+				continue
 			if not card.effective_to or getdate(card.effective_to) >= getdate(self.effective_from):
 				frappe.throw(
-					_("Rate card {0} overlaps this customer and date range.").format(
+					_("Rate card {0} overlaps this customer/transporter specificity and date range.").format(
 						frappe.bold(card.name)
 					)
 				)

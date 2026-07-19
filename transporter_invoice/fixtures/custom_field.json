@@ -1,0 +1,72 @@
+[
+ {
+  "allow_on_submit": 1,
+  "doctype": "Custom Field",
+  "dt": "Sales Invoice",
+  "fieldname": "custom_transport_billing_batch",
+  "fieldtype": "Link",
+  "insert_after": "customer",
+  "label": "Transport Billing Batch",
+  "module": "Transport Invoicing",
+  "name": "Sales Invoice-custom_transport_billing_batch",
+  "no_copy": 1,
+  "options": "Transport Billing Batch",
+  "read_only": 1
+ },
+ {
+  "allow_on_submit": 1,
+  "doctype": "Custom Field",
+  "dt": "Sales Invoice",
+  "fieldname": "custom_transport_delivery",
+  "fieldtype": "Link",
+  "insert_after": "custom_transport_billing_batch",
+  "label": "Transport Delivery",
+  "module": "Transport Invoicing",
+  "name": "Sales Invoice-custom_transport_delivery",
+  "no_copy": 1,
+  "options": "Transport Delivery",
+  "read_only": 1
+ },
+ {
+  "allow_on_submit": 1,
+  "doctype": "Custom Field",
+  "dt": "Sales Invoice Item",
+  "fieldname": "custom_transport_delivery",
+  "fieldtype": "Link",
+  "insert_after": "description",
+  "label": "Transport Delivery",
+  "module": "Transport Invoicing",
+  "name": "Sales Invoice Item-custom_transport_delivery",
+  "no_copy": 1,
+  "options": "Transport Delivery",
+  "read_only": 1
+ },
+ {
+  "allow_on_submit": 1,
+  "doctype": "Custom Field",
+  "dt": "Purchase Invoice",
+  "fieldname": "custom_transport_delivery",
+  "fieldtype": "Link",
+  "insert_after": "supplier",
+  "label": "Transport Delivery",
+  "module": "Transport Invoicing",
+  "name": "Purchase Invoice-custom_transport_delivery",
+  "no_copy": 1,
+  "options": "Transport Delivery",
+  "read_only": 1
+ },
+ {
+  "allow_on_submit": 1,
+  "doctype": "Custom Field",
+  "dt": "Purchase Invoice Item",
+  "fieldname": "custom_transport_delivery",
+  "fieldtype": "Link",
+  "insert_after": "description",
+  "label": "Transport Delivery",
+  "module": "Transport Invoicing",
+  "name": "Purchase Invoice Item-custom_transport_delivery",
+  "no_copy": 1,
+  "options": "Transport Delivery",
+  "read_only": 1
+ }
+]

@@ -6,3 +6,7 @@ app_email = "support@example.com"
 app_license = "MIT"
 
 required_apps = ["frappe", "erpnext"]
+
+fixtures = [
+	"Custom Field",
+]

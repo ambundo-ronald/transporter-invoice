@@ -9,6 +9,7 @@
   "company",
   "company_abbr",
   "customer",
+  "transporter",
   "rate_unit",
   "date_section",
   "effective_from",
@@ -35,13 +36,20 @@
    "read_only": 1
   },
   {
-   "description": "Customer to invoice using this route matrix.",
+   "description": "Optional. Leave blank to use this matrix for any customer; set a customer only for a customer-specific override.",
    "fieldname": "customer",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Customer",
-   "options": "Customer",
-   "reqd": 1
+   "options": "Customer"
+  },
+  {
+   "description": "Optional. Leave blank to use this matrix for any rider/transporter; set a supplier only for a transporter-specific override.",
+   "fieldname": "transporter",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Transporter",
+   "options": "Supplier"
   },
   {
    "default": "Per Kg",
@@ -129,6 +137,6 @@
  "sort_field": "effective_from",
  "sort_order": "DESC",
  "states": [],
- "title_field": "customer",
+ "title_field": "company",
  "track_changes": 1
 }

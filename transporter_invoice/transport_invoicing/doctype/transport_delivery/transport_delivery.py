@@ -3,6 +3,8 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, getdate
 
+from transporter_invoice.transport_invoicing.invoice_links import set_if_has_field
+
 
 TRUCK_RATE_FIELDS = {
 	"10 MT": ("customer_10mt_rate", "transporter_10_13mt_rate"),
@@ -70,6 +72,7 @@ class TransportDelivery(Document):
 		rate = get_applicable_rate(
 			company=self.company,
 			customer=self.customer,
+			transporter=self.transporter,
 			delivery_date=self.delivery_date,
 			destination=self.destination,
 			truck_class=self.truck_class,
@@ -106,10 +109,10 @@ class TransportDelivery(Document):
 
 
 @frappe.whitelist()
-def get_applicable_rate(company, customer, delivery_date, destination, truck_class):
-	if not all((company, customer, delivery_date, destination, truck_class)):
+def get_applicable_rate(company, customer, transporter, delivery_date, destination, truck_class):
+	if not all((company, customer, transporter, delivery_date, destination, truck_class)):
 		frappe.throw(
-			_("Company, customer, delivery date, destination, and truck class are required.")
+			_("Company, customer, transporter, delivery date, destination, and truck class are required.")
 		)
 
 	configured_company = frappe.db.get_value("Transport Invoice Settings", {}, "company")
@@ -136,8 +139,22 @@ def get_applicable_rate(company, customer, delivery_date, destination, truck_cla
 			["effective_to", "is", "not set"],
 			["effective_to", ">=", getdate(delivery_date)],
 		],
-		fields=["name", "rate_unit", "effective_from"],
+		fields=["name", "customer", "transporter", "rate_unit", "effective_from"],
 		order_by="effective_from desc",
+	)
+	cards = [
+		card
+		for card in cards
+		if (not card.customer or card.customer == customer)
+		and (not card.transporter or card.transporter == transporter)
+	]
+	cards.sort(
+		key=lambda card: (
+			1 if card.customer == customer else 0,
+			1 if card.transporter == transporter else 0,
+			getdate(card.effective_from),
+		),
+		reverse=True,
 	)
 
 	destination_key = destination.strip().casefold()
@@ -261,10 +278,11 @@ def _create_invoice(delivery_name, invoice_doctype):
 	invoice.posting_date = delivery.delivery_date
 	invoice.set_posting_time = 1
 	invoice.set(party_field, party)
+	set_if_has_field(invoice, "custom_transport_delivery", delivery.name)
 	invoice.remarks = _("Created from Transport Delivery {0} ({1}).").format(
 		delivery.name, delivery.delivery_reference
 	)
-	invoice.append(
+	item = invoice.append(
 		"items",
 		{
 			"item_code": item_code,
@@ -282,6 +300,7 @@ def _create_invoice(delivery_name, invoice_doctype):
 			"cost_center": cost_center,
 		},
 	)
+	set_if_has_field(item, "custom_transport_delivery", delivery.name)
 	invoice.set_missing_values()
 	invoice.calculate_taxes_and_totals()
 	invoice.insert()

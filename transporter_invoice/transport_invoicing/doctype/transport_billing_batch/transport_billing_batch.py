@@ -3,6 +3,8 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, getdate
 
+from transporter_invoice.transport_invoicing.invoice_links import set_if_has_field
+
 
 class TransportBillingBatch(Document):
 	def validate(self):
@@ -159,6 +161,7 @@ def create_sales_invoice(batch_name):
 	invoice.customer = batch.customer
 	invoice.posting_date = batch.posting_date
 	invoice.set_posting_time = 1
+	set_if_has_field(invoice, "custom_transport_billing_batch", batch.name)
 	invoice.remarks = _("Monthly transport billing batch {0}: {1} to {2}.").format(
 		batch.name, batch.from_date, batch.to_date
 	)
@@ -172,7 +175,7 @@ def create_sales_invoice(batch_name):
 				)
 			)
 		quantity = flt(delivery.actual_weight_kg) if delivery.rate_unit == "Per Kg" else 1
-		invoice.append(
+		item = invoice.append(
 			"items",
 			{
 				"item_code": settings.sales_item,
@@ -190,6 +193,7 @@ def create_sales_invoice(batch_name):
 				"cost_center": settings.sales_cost_center,
 			},
 		)
+		set_if_has_field(item, "custom_transport_delivery", delivery.name)
 
 	invoice.set_missing_values()
 	invoice.calculate_taxes_and_totals()
