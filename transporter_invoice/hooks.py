@@ -10,3 +10,12 @@ required_apps = ["frappe", "erpnext"]
 fixtures = [
 	"Custom Field",
 ]
+
+after_install = "transporter_invoice.transport_invoicing.seed_data.create_default_rate_cards"
+
+doc_events = {
+	"Transport Invoice Settings": {
+		"after_insert": "transporter_invoice.transport_invoicing.seed_data.create_default_rate_cards",
+		"on_update": "transporter_invoice.transport_invoicing.seed_data.create_default_rate_cards",
+	},
+}

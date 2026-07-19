@@ -83,6 +83,19 @@ bench --site your-site migrate
    the route matrix rows.
 5. Create customer-specific or transporter-specific rate cards only where rates differ.
 
+## Default Rate Cards
+
+After you create **Transport Invoice Settings** for the enabled company, the app seeds two
+generic draft rate cards automatically:
+
+- **Under 10 Tonnes** fixed truck-capacity rates.
+- **10 Tonnes and Above** route matrix rates.
+
+The same seed also runs on install and migrate, but it checks first so it does not create
+duplicates. These cards have no Customer and no Transporter, so they work as templates for
+any delivery after you submit them. You can edit, delete, or copy them before submitting,
+and you can create more specific customer/transporter overrides when needed.
+
 The delivery date determines which submitted rate card applies, and the selected values
 are copied onto each delivery for historical accuracy.
 
