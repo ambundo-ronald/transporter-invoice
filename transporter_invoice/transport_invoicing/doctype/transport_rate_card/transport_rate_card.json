@@ -10,6 +10,7 @@
   "company_abbr",
   "customer",
   "transporter",
+  "rate_category",
   "rate_unit",
   "date_section",
   "effective_from",
@@ -50,6 +51,16 @@
    "in_list_view": 1,
    "label": "Transporter",
    "options": "Supplier"
+  },
+  {
+   "default": "10 Tonnes and Above",
+   "description": "Under 10 Tonnes uses fixed trip amounts by truck capacity. 10 Tonnes and Above uses the route matrix rates.",
+   "fieldname": "rate_category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Rate Category",
+   "options": "Under 10 Tonnes\n10 Tonnes and Above",
+   "reqd": 1
   },
   {
    "default": "Per Kg",

@@ -15,6 +15,7 @@ frappe.ui.form.on("Transport Delivery", {
 	customer: clear_applied_rate,
 	delivery_date: clear_applied_rate,
 	destination: clear_applied_rate,
+	rate_category: clear_applied_rate,
 	truck_class: clear_applied_rate,
 	actual_weight_kg: clear_applied_rate,
 });

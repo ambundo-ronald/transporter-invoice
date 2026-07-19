@@ -5,6 +5,8 @@ from frappe.utils import flt, getdate
 
 
 RATE_FIELDS = (
+	"under_10_customer_rate",
+	"under_10_transporter_rate",
 	"customer_10mt_rate",
 	"customer_14mt_rate",
 	"customer_trailer_rate",
@@ -16,6 +18,7 @@ RATE_FIELDS = (
 
 class TransportRateCard(Document):
 	def validate(self):
+		self.rate_unit = "Fixed Trip Amount" if self.rate_category == "Under 10 Tonnes" else self.rate_unit
 		self._validate_configured_company()
 		self._validate_dates()
 		self._validate_rates()
@@ -40,6 +43,31 @@ class TransportRateCard(Document):
 		if not self.rates:
 			frappe.throw(_("Add at least one location and its rates."))
 
+		if self.rate_category == "Under 10 Tonnes":
+			self._validate_under_10_rates()
+			return
+
+		self._validate_above_10_rates()
+
+	def _validate_under_10_rates(self):
+		seen_capacities = set()
+		for row in self.rates:
+			row.truck_capacity = (row.truck_capacity or "").strip()
+			if row.truck_capacity not in {"1.5 MT", "3 MT", "5 MT", "7 MT"}:
+				frappe.throw(_("Row {0}: select a valid under-10 truck capacity.").format(row.idx))
+
+			if row.truck_capacity in seen_capacities:
+				frappe.throw(_("Truck capacity {0} is listed more than once.").format(row.truck_capacity))
+			seen_capacities.add(row.truck_capacity)
+
+			customer_rate = flt(row.under_10_customer_rate)
+			transporter_rate = flt(row.under_10_transporter_rate)
+			if customer_rate <= 0 or transporter_rate <= 0:
+				frappe.throw(_("Row {0}: under-10 customer and transporter rates are required.").format(row.idx))
+			if customer_rate < transporter_rate:
+				frappe.throw(_("Row {0}: customer rate cannot be below transporter rate.").format(row.idx))
+
+	def _validate_above_10_rates(self):
 		seen_locations = set()
 		for row in self.rates:
 			row.distance_band = (row.distance_band or "").strip()
@@ -88,6 +116,7 @@ class TransportRateCard(Document):
 			"Transport Rate Card",
 			filters={
 				"company": self.company,
+				"rate_category": self.rate_category,
 				"docstatus": ["<", 2],
 				"name": ["!=", self.name],
 				"effective_from": ["<=", self.effective_to or "9999-12-31"],

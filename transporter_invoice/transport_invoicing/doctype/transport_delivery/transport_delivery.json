@@ -13,6 +13,7 @@
   "transporter",
   "delivery_section",
   "destination",
+  "rate_category",
   "truck_class",
   "actual_weight_kg",
   "vehicle_registration",
@@ -91,11 +92,20 @@
    "reqd": 1
   },
   {
+   "default": "10 Tonnes and Above",
+   "fieldname": "rate_category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Rate Category",
+   "options": "Under 10 Tonnes\n10 Tonnes and Above",
+   "reqd": 1
+  },
+  {
    "fieldname": "truck_class",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Truck Class",
-   "options": "10 MT\n14 MT\nTrailer",
+   "options": "1.5 MT\n3 MT\n5 MT\n7 MT\n10 MT\n14 MT\nTrailer",
    "reqd": 1
   },
   {

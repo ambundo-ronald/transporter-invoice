@@ -11,6 +11,8 @@ TRUCK_RATE_FIELDS = {
 	"14 MT": ("customer_14mt_rate", "transporter_14_17mt_rate"),
 	"Trailer": ("customer_trailer_rate", "transporter_28mt_rate"),
 }
+UNDER_10_TRUCK_CLASSES = {"1.5 MT", "3 MT", "5 MT", "7 MT"}
+ABOVE_10_TRUCK_CLASSES = set(TRUCK_RATE_FIELDS)
 
 
 class TransportDelivery(Document):
@@ -43,7 +45,13 @@ class TransportDelivery(Document):
 			)
 
 	def _validate_delivery_details(self):
-		if self.truck_class not in TRUCK_RATE_FIELDS:
+		if self.rate_category not in {"Under 10 Tonnes", "10 Tonnes and Above"}:
+			frappe.throw(_("Select a valid rate category."))
+		if self.rate_category == "Under 10 Tonnes" and self.truck_class not in UNDER_10_TRUCK_CLASSES:
+			frappe.throw(_("Under 10 Tonnes deliveries must use 1.5 MT, 3 MT, 5 MT, or 7 MT."))
+		if self.rate_category == "10 Tonnes and Above" and self.truck_class not in ABOVE_10_TRUCK_CLASSES:
+			frappe.throw(_("10 Tonnes and Above deliveries must use 10 MT, 14 MT, or Trailer."))
+		if self.truck_class not in UNDER_10_TRUCK_CLASSES | ABOVE_10_TRUCK_CLASSES:
 			frappe.throw(_("Select a valid truck class."))
 		if flt(self.actual_weight_kg) <= 0:
 			frappe.throw(_("Actual Weight (Kg) must be greater than zero."))
@@ -75,6 +83,7 @@ class TransportDelivery(Document):
 			transporter=self.transporter,
 			delivery_date=self.delivery_date,
 			destination=self.destination,
+			rate_category=self.rate_category,
 			truck_class=self.truck_class,
 		)
 		self.rate_card = rate.rate_card
@@ -109,10 +118,10 @@ class TransportDelivery(Document):
 
 
 @frappe.whitelist()
-def get_applicable_rate(company, customer, transporter, delivery_date, destination, truck_class):
-	if not all((company, customer, transporter, delivery_date, destination, truck_class)):
+def get_applicable_rate(company, customer, transporter, delivery_date, destination, rate_category, truck_class):
+	if not all((company, customer, transporter, delivery_date, rate_category, truck_class)):
 		frappe.throw(
-			_("Company, customer, transporter, delivery date, destination, and truck class are required.")
+			_("Company, customer, transporter, delivery date, rate category, and truck class are required.")
 		)
 
 	configured_company = frappe.db.get_value("Transport Invoice Settings", {}, "company")
@@ -124,14 +133,18 @@ def get_applicable_rate(company, customer, transporter, delivery_date, destinati
 				frappe.bold(configured_company)
 			)
 		)
-	if truck_class not in TRUCK_RATE_FIELDS:
-		frappe.throw(_("Select a valid truck class."))
+	if rate_category == "Under 10 Tonnes" and truck_class not in UNDER_10_TRUCK_CLASSES:
+		frappe.throw(_("Under 10 Tonnes deliveries must use 1.5 MT, 3 MT, 5 MT, or 7 MT."))
+	if rate_category == "10 Tonnes and Above" and truck_class not in ABOVE_10_TRUCK_CLASSES:
+		frappe.throw(_("10 Tonnes and Above deliveries must use 10 MT, 14 MT, or Trailer."))
+	if rate_category == "10 Tonnes and Above" and not (destination or "").strip():
+		frappe.throw(_("Destination is required for 10 Tonnes and Above route matrix rates."))
 
 	cards = frappe.get_list(
 		"Transport Rate Card",
 		filters={
 			"company": company,
-			"customer": customer,
+			"rate_category": rate_category,
 			"docstatus": 1,
 			"effective_from": ["<=", getdate(delivery_date)],
 		},
@@ -157,25 +170,60 @@ def get_applicable_rate(company, customer, transporter, delivery_date, destinati
 		reverse=True,
 	)
 
+	if rate_category == "Under 10 Tonnes":
+		return _get_under_10_rate(cards, truck_class)
+
+	return _get_above_10_rate(cards, destination, truck_class, delivery_date)
+
+
+def _get_under_10_rate(cards, truck_class):
+	for card in cards:
+		rate = frappe.db.get_value(
+			"Transport Rate",
+			{
+				"parent": card.name,
+				"parenttype": "Transport Rate Card",
+				"truck_capacity": truck_class,
+			},
+			[
+				"name",
+				"distance_band",
+				"location",
+				"under_10_customer_rate",
+				"under_10_transporter_rate",
+			],
+			as_dict=True,
+		)
+		if rate:
+			customer_rate = flt(rate.under_10_customer_rate)
+			transporter_rate = flt(rate.under_10_transporter_rate)
+			return frappe._dict(
+				rate_card=card.name,
+				rate_row=rate.name,
+				distance_band=rate.distance_band,
+				rate_unit="Fixed Trip Amount",
+				customer_rate=customer_rate,
+				transporter_rate=transporter_rate,
+			)
+
+	frappe.throw(
+		_("No submitted under-10 rate was found for {0}.").format(frappe.bold(truck_class))
+	)
+
+
+def _get_above_10_rate(cards, destination, truck_class, delivery_date):
 	destination_key = destination.strip().casefold()
 	customer_field, transporter_field = TRUCK_RATE_FIELDS[truck_class]
 	for card in cards:
 		rows = frappe.get_all(
 			"Transport Rate",
 			filters={"parent": card.name, "parenttype": "Transport Rate Card"},
-			fields=[
-				"name",
-				"distance_band",
-				"location",
-				customer_field,
-				transporter_field,
-			],
+			fields=["name", "distance_band", "location", customer_field, transporter_field],
 			order_by="idx asc",
 		)
 		for row in rows:
 			if (row.location or "").strip().casefold() != destination_key:
 				continue
-
 			customer_rate = flt(row.get(customer_field))
 			transporter_rate = flt(row.get(transporter_field))
 			if not customer_rate or not transporter_rate:
@@ -196,7 +244,7 @@ def get_applicable_rate(company, customer, transporter, delivery_date, destinati
 			)
 
 	frappe.throw(
-		_("No submitted rate was found for {0}, {1}, on {2}.").format(
+		_("No submitted above-10 route rate was found for {0}, {1}, on {2}.").format(
 			frappe.bold(destination),
 			frappe.bold(truck_class),
 			frappe.bold(delivery_date),

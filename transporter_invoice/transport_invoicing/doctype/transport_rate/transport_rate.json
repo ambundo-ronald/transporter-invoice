@@ -7,6 +7,9 @@
  "field_order": [
   "distance_band",
   "location",
+  "truck_capacity",
+  "under_10_customer_rate",
+  "under_10_transporter_rate",
   "customer_10mt_rate",
   "customer_14mt_rate",
   "customer_trailer_rate",
@@ -20,16 +23,37 @@
    "fieldname": "distance_band",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Distance",
-   "reqd": 1
+   "label": "Distance"
   },
   {
    "columns": 3,
    "fieldname": "location",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Location Covered",
-   "reqd": 1
+   "label": "Location Covered"
+  },
+  {
+   "columns": 1,
+   "description": "Use for Under 10 Tonnes cards only.",
+   "fieldname": "truck_capacity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Truck Capacity",
+   "options": "\n1.5 MT\n3 MT\n5 MT\n7 MT"
+  },
+  {
+   "columns": 1,
+   "fieldname": "under_10_customer_rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Under 10 Customer Rate"
+  },
+  {
+   "columns": 1,
+   "fieldname": "under_10_transporter_rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Under 10 Transporter Rate"
   },
   {
    "columns": 2,
