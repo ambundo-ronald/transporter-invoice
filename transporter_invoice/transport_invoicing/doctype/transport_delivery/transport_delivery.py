@@ -1,4 +1,4 @@
-import frappe
+﻿import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, getdate
@@ -53,8 +53,8 @@ class TransportDelivery(Document):
 			frappe.throw(_("10 Tonnes and Above deliveries must use 10 MT, 14 MT, or Trailer."))
 		if self.truck_class not in UNDER_10_TRUCK_CLASSES | ABOVE_10_TRUCK_CLASSES:
 			frappe.throw(_("Select a valid truck class."))
-		if flt(self.actual_weight_kg) <= 0:
-			frappe.throw(_("Actual Weight (Kg) must be greater than zero."))
+		if self.rate_category == "10 Tonnes and Above" and flt(self.actual_distance_km) <= 0:
+			frappe.throw(_("Actual Distance (KM) must be greater than zero for above-10-tonne deliveries."))
 
 	def _validate_configured_company(self):
 		configured_company = frappe.db.get_value("Transport Invoice Settings", {}, "company")
@@ -85,6 +85,7 @@ class TransportDelivery(Document):
 			destination=self.destination,
 			rate_category=self.rate_category,
 			truck_class=self.truck_class,
+			actual_distance_km=self.actual_distance_km,
 		)
 		self.rate_card = rate.rate_card
 		self.rate_row = rate.rate_row
@@ -93,7 +94,7 @@ class TransportDelivery(Document):
 		self.customer_rate = rate.customer_rate
 		self.transporter_rate = rate.transporter_rate
 
-		quantity = flt(self.actual_weight_kg) if rate.rate_unit == "Per Kg" else 1
+		quantity = flt(self.actual_distance_km) if rate.rate_unit == "Per Km" else 1
 		self.customer_amount = quantity * flt(rate.customer_rate)
 		self.transporter_amount = quantity * flt(rate.transporter_rate)
 		self.margin = flt(self.customer_amount) - flt(self.transporter_amount)
@@ -118,7 +119,7 @@ class TransportDelivery(Document):
 
 
 @frappe.whitelist()
-def get_applicable_rate(company, customer, transporter, delivery_date, destination, rate_category, truck_class):
+def get_applicable_rate(company, customer, transporter, delivery_date, destination, rate_category, truck_class, actual_distance_km=None):
 	if not all((company, customer, transporter, delivery_date, rate_category, truck_class)):
 		frappe.throw(
 			_("Company, customer, transporter, delivery date, rate category, and truck class are required.")
@@ -139,6 +140,8 @@ def get_applicable_rate(company, customer, transporter, delivery_date, destinati
 		frappe.throw(_("10 Tonnes and Above deliveries must use 10 MT, 14 MT, or Trailer."))
 	if rate_category == "10 Tonnes and Above" and not (destination or "").strip():
 		frappe.throw(_("Destination is required for 10 Tonnes and Above route matrix rates."))
+	if rate_category == "10 Tonnes and Above" and flt(actual_distance_km) <= 0:
+		frappe.throw(_("Actual Distance (KM) must be greater than zero for above-10-tonne rates."))
 
 	cards = frappe.get_list(
 		"Transport Rate Card",
@@ -173,7 +176,7 @@ def get_applicable_rate(company, customer, transporter, delivery_date, destinati
 	if rate_category == "Under 10 Tonnes":
 		return _get_under_10_rate(cards, truck_class)
 
-	return _get_above_10_rate(cards, destination, truck_class, delivery_date)
+	return _get_above_10_rate(cards, destination, truck_class, delivery_date, actual_distance_km)
 
 
 def _get_under_10_rate(cards, truck_class):
@@ -211,18 +214,23 @@ def _get_under_10_rate(cards, truck_class):
 	)
 
 
-def _get_above_10_rate(cards, destination, truck_class, delivery_date):
+def _get_above_10_rate(cards, destination, truck_class, delivery_date, actual_distance_km):
 	destination_key = destination.strip().casefold()
+	actual_distance = flt(actual_distance_km)
 	customer_field, transporter_field = TRUCK_RATE_FIELDS[truck_class]
 	for card in cards:
 		rows = frappe.get_all(
 			"Transport Rate",
 			filters={"parent": card.name, "parenttype": "Transport Rate Card"},
-			fields=["name", "distance_band", "location", customer_field, transporter_field],
+			fields=["name", "distance_band", "from_km", "to_km", "location", customer_field, transporter_field],
 			order_by="idx asc",
 		)
 		for row in rows:
 			if (row.location or "").strip().casefold() != destination_key:
+				continue
+			if actual_distance < flt(row.from_km):
+				continue
+			if row.to_km and actual_distance > flt(row.to_km):
 				continue
 			customer_rate = flt(row.get(customer_field))
 			transporter_rate = flt(row.get(transporter_field))
@@ -319,7 +327,7 @@ def _create_invoice(delivery_name, invoice_doctype):
 	rate = delivery.customer_rate if is_sales else delivery.transporter_rate
 	party_field = "customer" if is_sales else "supplier"
 	party = delivery.customer if is_sales else delivery.transporter
-	quantity = flt(delivery.actual_weight_kg) if delivery.rate_unit == "Per Kg" else 1
+	quantity = flt(delivery.actual_distance_km) if delivery.rate_unit == "Per Km" else 1
 
 	invoice = frappe.new_doc(invoice_doctype)
 	invoice.company = delivery.company
@@ -337,12 +345,12 @@ def _create_invoice(delivery_name, invoice_doctype):
 			"qty": quantity,
 			"rate": rate,
 			"description": _(
-				"Transport to {0}; distance {1}; truck {2}; weight {3} Kg; vehicle {4}"
+				"Transport to {0}; band {1}; actual distance {2} KM; truck {3}; vehicle {4}"
 			).format(
 				delivery.destination,
 				delivery.distance_band,
+				delivery.actual_distance_km,
 				delivery.truck_class,
-				delivery.actual_weight_kg,
 				delivery.vehicle_registration or "-",
 			),
 			"cost_center": cost_center,
@@ -357,3 +365,4 @@ def _create_invoice(delivery_name, invoice_doctype):
 
 	delivery.db_set(link_field, invoice.name, update_modified=False)
 	return invoice.name
+

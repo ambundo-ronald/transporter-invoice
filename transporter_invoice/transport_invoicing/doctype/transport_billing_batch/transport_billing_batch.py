@@ -1,4 +1,4 @@
-import frappe
+﻿import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, getdate
@@ -61,7 +61,8 @@ class TransportBillingBatch(Document):
 					"delivery_reference",
 					"destination",
 					"truck_class",
-					"actual_weight_kg",
+			"actual_distance_km",
+			"actual_weight_kg",
 					"customer_rate",
 					"customer_amount",
 					"sales_invoice",
@@ -85,6 +86,7 @@ class TransportBillingBatch(Document):
 			row.delivery_reference = delivery.delivery_reference
 			row.destination = delivery.destination
 			row.truck_class = delivery.truck_class
+			row.actual_distance_km = delivery.actual_distance_km
 			row.actual_weight_kg = delivery.actual_weight_kg
 			row.customer_rate = delivery.customer_rate
 			row.customer_amount = delivery.customer_amount
@@ -125,6 +127,7 @@ def get_unbilled_deliveries(company, customer, from_date, to_date):
 			"delivery_reference",
 			"destination",
 			"truck_class",
+			"actual_distance_km",
 			"actual_weight_kg",
 			"customer_rate",
 			"customer_amount",
@@ -174,7 +177,7 @@ def create_sales_invoice(batch_name):
 					delivery.name, delivery.sales_invoice
 				)
 			)
-		quantity = flt(delivery.actual_weight_kg) if delivery.rate_unit == "Per Kg" else 1
+		quantity = flt(delivery.actual_distance_km) if delivery.rate_unit == "Per Km" else 1
 		item = invoice.append(
 			"items",
 			{
@@ -182,13 +185,13 @@ def create_sales_invoice(batch_name):
 				"qty": quantity,
 				"rate": delivery.customer_rate,
 				"description": _(
-					"{0}: Transport to {1}; distance {2}; truck {3}; weight {4} Kg"
+					"{0}: Transport to {1}; band {2}; actual distance {3} KM; truck {4}"
 				).format(
 					delivery.delivery_reference,
 					delivery.destination,
 					delivery.distance_band,
+					delivery.actual_distance_km,
 					delivery.truck_class,
-					delivery.actual_weight_kg,
 				),
 				"cost_center": settings.sales_cost_center,
 			},
@@ -211,3 +214,6 @@ def create_sales_invoice(batch_name):
 		)
 
 	return invoice.name
+
+
+

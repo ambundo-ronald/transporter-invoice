@@ -1,153 +1,159 @@
-{
- "actions": [],
- "allow_rename": 1,
- "autoname": "format:TRC-{company_abbr}-{effective_from}-{####}",
- "creation": "2026-06-08 00:00:00.000000",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "company",
-  "company_abbr",
-  "customer",
-  "transporter",
-  "rate_category",
-  "rate_unit",
-  "date_section",
-  "effective_from",
-  "effective_to",
-  "rates_section",
-  "rates",
-  "notes"
- ],
- "fields": [
-  {
-   "fieldname": "company",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Company",
-   "options": "Company",
-   "reqd": 1
-  },
-  {
-   "fetch_from": "company.abbr",
-   "fieldname": "company_abbr",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Company Abbreviation",
-   "read_only": 1
-  },
-  {
-   "description": "Optional. Leave blank to use this matrix for any customer; set a customer only for a customer-specific override.",
-   "fieldname": "customer",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Customer",
-   "options": "Customer"
-  },
-  {
-   "description": "Optional. Leave blank to use this matrix for any rider/transporter; set a supplier only for a transporter-specific override.",
-   "fieldname": "transporter",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Transporter",
-   "options": "Supplier"
-  },
-  {
-   "default": "10 Tonnes and Above",
-   "description": "Under 10 Tonnes uses fixed trip amounts by truck capacity. 10 Tonnes and Above uses the route matrix rates.",
-   "fieldname": "rate_category",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Rate Category",
-   "options": "Under 10 Tonnes\n10 Tonnes and Above",
-   "reqd": 1
-  },
-  {
-   "default": "Per Kg",
-   "description": "The supplied above-10-tonne decimal rates are normally charged per kilogram.",
-   "fieldname": "rate_unit",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Rate Unit",
-   "options": "Per Kg\nFixed Trip Amount",
-   "reqd": 1
-  },
-  {
-   "fieldname": "date_section",
-   "fieldtype": "Section Break",
-   "label": "Validity"
-  },
-  {
-   "fieldname": "effective_from",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "Effective From",
-   "reqd": 1
-  },
-  {
-   "fieldname": "effective_to",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "Effective To"
-  },
-  {
-   "fieldname": "rates_section",
-   "fieldtype": "Section Break",
-   "label": "Route Rate Matrix"
-  },
-  {
-   "description": "Add one row for each covered destination. Repeat the distance band and rates where several destinations share the same price.",
-   "fieldname": "rates",
-   "fieldtype": "Table",
-   "label": "Locations and Rates",
-   "options": "Transport Rate",
-   "reqd": 1
-  },
-  {
-   "fieldname": "notes",
-   "fieldtype": "Small Text",
-   "label": "Notes"
-  }
- ],
- "index_web_pages_for_search": 1,
- "is_submittable": 1,
- "links": [],
- "modified": "2026-06-09 00:00:00.000000",
- "modified_by": "Administrator",
- "module": "Transport Invoicing",
- "name": "Transport Rate Card",
- "naming_rule": "Expression",
- "owner": "Administrator",
- "permissions": [
-  {
-   "cancel": 1,
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Accounts Manager",
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Accounts User",
-   "share": 1,
-   "write": 1
-  }
- ],
- "sort_field": "effective_from",
- "sort_order": "DESC",
- "states": [],
- "title_field": "company",
- "track_changes": 1
+﻿{
+    "actions":  [
+
+                ],
+    "allow_rename":  1,
+    "autoname":  "format:TRC-{company_abbr}-{effective_from}-{####}",
+    "creation":  "2026-06-08 00:00:00.000000",
+    "doctype":  "DocType",
+    "engine":  "InnoDB",
+    "field_order":  [
+                        "company",
+                        "company_abbr",
+                        "customer",
+                        "transporter",
+                        "rate_category",
+                        "rate_unit",
+                        "date_section",
+                        "effective_from",
+                        "effective_to",
+                        "rates_section",
+                        "rates",
+                        "notes"
+                    ],
+    "fields":  [
+                   {
+                       "fieldname":  "company",
+                       "fieldtype":  "Link",
+                       "in_list_view":  1,
+                       "label":  "Company",
+                       "options":  "Company",
+                       "reqd":  1
+                   },
+                   {
+                       "fetch_from":  "company.abbr",
+                       "fieldname":  "company_abbr",
+                       "fieldtype":  "Data",
+                       "hidden":  1,
+                       "label":  "Company Abbreviation",
+                       "read_only":  1
+                   },
+                   {
+                       "description":  "Optional. Leave blank to use this matrix for any customer; set a customer only for a customer-specific override.",
+                       "fieldname":  "customer",
+                       "fieldtype":  "Link",
+                       "in_list_view":  1,
+                       "label":  "Customer",
+                       "options":  "Customer"
+                   },
+                   {
+                       "description":  "Optional. Leave blank to use this matrix for any rider/transporter; set a supplier only for a transporter-specific override.",
+                       "fieldname":  "transporter",
+                       "fieldtype":  "Link",
+                       "in_list_view":  1,
+                       "label":  "Transporter",
+                       "options":  "Supplier"
+                   },
+                   {
+                       "default":  "10 Tonnes and Above",
+                       "description":  "Under 10 Tonnes uses fixed trip amounts by truck capacity. 10 Tonnes and Above uses the route matrix rates.",
+                       "fieldname":  "rate_category",
+                       "fieldtype":  "Select",
+                       "in_list_view":  1,
+                       "label":  "Rate Category",
+                       "options":  "Under 10 Tonnes\n10 Tonnes and Above",
+                       "reqd":  1
+                   },
+                   {
+                       "default":  "Per Km",
+                       "description":  "Above-10-tonne decimal rates are multiplied by actual KM. Under-10-tonne rates are fixed trip amounts.",
+                       "fieldname":  "rate_unit",
+                       "fieldtype":  "Select",
+                       "in_list_view":  1,
+                       "label":  "Rate Unit",
+                       "options":  "Per Km\nFixed Trip Amount",
+                       "reqd":  1
+                   },
+                   {
+                       "fieldname":  "date_section",
+                       "fieldtype":  "Section Break",
+                       "label":  "Validity"
+                   },
+                   {
+                       "fieldname":  "effective_from",
+                       "fieldtype":  "Date",
+                       "in_list_view":  1,
+                       "label":  "Effective From",
+                       "reqd":  1
+                   },
+                   {
+                       "fieldname":  "effective_to",
+                       "fieldtype":  "Date",
+                       "in_list_view":  1,
+                       "label":  "Effective To"
+                   },
+                   {
+                       "fieldname":  "rates_section",
+                       "fieldtype":  "Section Break",
+                       "label":  "Route Rate Matrix"
+                   },
+                   {
+                       "description":  "Add one row for each covered destination. Repeat the distance band and rates where several destinations share the same price.",
+                       "fieldname":  "rates",
+                       "fieldtype":  "Table",
+                       "label":  "Locations and Rates",
+                       "options":  "Transport Rate",
+                       "reqd":  1
+                   },
+                   {
+                       "fieldname":  "notes",
+                       "fieldtype":  "Small Text",
+                       "label":  "Notes"
+                   }
+               ],
+    "index_web_pages_for_search":  1,
+    "is_submittable":  1,
+    "links":  [
+
+              ],
+    "modified":  "2026-06-09 00:00:00.000000",
+    "modified_by":  "Administrator",
+    "module":  "Transport Invoicing",
+    "name":  "Transport Rate Card",
+    "naming_rule":  "Expression",
+    "owner":  "Administrator",
+    "permissions":  [
+                        {
+                            "cancel":  1,
+                            "create":  1,
+                            "delete":  1,
+                            "email":  1,
+                            "export":  1,
+                            "print":  1,
+                            "read":  1,
+                            "report":  1,
+                            "role":  "Accounts Manager",
+                            "share":  1,
+                            "submit":  1,
+                            "write":  1
+                        },
+                        {
+                            "create":  1,
+                            "email":  1,
+                            "export":  1,
+                            "print":  1,
+                            "read":  1,
+                            "report":  1,
+                            "role":  "Accounts User",
+                            "share":  1,
+                            "write":  1
+                        }
+                    ],
+    "sort_field":  "effective_from",
+    "sort_order":  "DESC",
+    "states":  [
+
+               ],
+    "title_field":  "company",
+    "track_changes":  1
 }

@@ -1,4 +1,4 @@
-import frappe
+﻿import frappe
 
 
 EFFECTIVE_FROM = "2026-06-01"
@@ -127,7 +127,7 @@ def _create_above_10_card(company):
 	card = frappe.new_doc("Transport Rate Card")
 	card.company = company
 	card.rate_category = "10 Tonnes and Above"
-	card.rate_unit = "Per Kg"
+	card.rate_unit = "Per Km"
 	card.effective_from = EFFECTIVE_FROM
 	card.notes = "Generic draft above-10-tonne route matrix seeded by Transporter Invoice. Edit or delete, then submit when ready."
 	for distance_band, locations, c10, c14, ctrailer, t10, t14, t28 in ABOVE_10_RATES:
@@ -136,6 +136,8 @@ def _create_above_10_card(company):
 				"rates",
 				{
 					"distance_band": distance_band,
+					"from_km": _distance_range(distance_band)[0],
+					"to_km": _distance_range(distance_band)[1],
 					"location": location,
 					"customer_10mt_rate": c10,
 					"customer_14mt_rate": c14,
@@ -160,3 +162,20 @@ def _default_card_exists(company, rate_category):
 		fields=["customer", "transporter"],
 	)
 	return any(not card.customer and not card.transporter for card in cards)
+
+
+def _distance_range(distance_band):
+	mapping = {
+		"0-25 KMs": (0, 25),
+		"26-50 KMs": (26, 50),
+		"51-100Kms": (51, 100),
+		"101-150Kms": (101, 150),
+		"151-200Kms": (151, 200),
+		"201-250Kms": (201, 250),
+		"251-300Kms": (251, 300),
+		"301-350Kms": (301, 350),
+		"350-400Kms": (350, 400),
+		"400-500 KMs": (400, 500),
+		"500 KMs and Above": (500, None),
+	}
+	return mapping[distance_band]

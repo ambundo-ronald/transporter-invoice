@@ -1,4 +1,4 @@
-frappe.ui.form.on("Transport Delivery", {
+﻿frappe.ui.form.on("Transport Delivery", {
 	refresh(frm) {
 		if (frm.doc.docstatus !== 1) {
 			return;
@@ -17,6 +17,7 @@ frappe.ui.form.on("Transport Delivery", {
 	destination: clear_applied_rate,
 	rate_category: clear_applied_rate,
 	truck_class: clear_applied_rate,
+	actual_distance_km: clear_applied_rate,
 	actual_weight_kg: clear_applied_rate,
 });
 
@@ -45,3 +46,4 @@ function call_invoice_method(frm, method) {
 		},
 	});
 }
+

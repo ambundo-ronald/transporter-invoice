@@ -1,4 +1,4 @@
-import frappe
+﻿import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, getdate
@@ -18,7 +18,7 @@ RATE_FIELDS = (
 
 class TransportRateCard(Document):
 	def validate(self):
-		self.rate_unit = "Fixed Trip Amount" if self.rate_category == "Under 10 Tonnes" else self.rate_unit
+		self.rate_unit = "Fixed Trip Amount" if self.rate_category == "Under 10 Tonnes" else "Per Km"
 		self._validate_configured_company()
 		self._validate_dates()
 		self._validate_rates()
@@ -74,6 +74,10 @@ class TransportRateCard(Document):
 			row.location = (row.location or "").strip()
 			if not row.distance_band or not row.location:
 				frappe.throw(_("Row {0}: distance and location are required.").format(row.idx))
+			if flt(row.from_km) < 0:
+				frappe.throw(_("Row {0}: From KM cannot be negative.").format(row.idx))
+			if row.to_km and flt(row.to_km) < flt(row.from_km):
+				frappe.throw(_("Row {0}: To KM cannot be below From KM.").format(row.idx))
 
 			location_key = row.location.casefold()
 			if location_key in seen_locations:
@@ -134,3 +138,5 @@ class TransportRateCard(Document):
 						frappe.bold(card.name)
 					)
 				)
+
+
