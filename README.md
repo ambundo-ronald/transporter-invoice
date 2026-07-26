@@ -1,4 +1,4 @@
-﻿# Transporter Invoice
+# Transporter Invoice
 
 ERPNext/Frappe v16 app for company-scoped transport billing.
 
@@ -21,14 +21,12 @@ or transporter has a special rate, create another submitted card for the same ma
 set that Customer and/or Transporter. During delivery entry, the app automatically uses
 the most specific matching card first.
 
-Each **Transport Delivery** is one trip. The delivery stores the destination, truck
-class, actual distance KM, optional weight, selected customer rate, selected transporter rate, customer amount,
-transporter amount, and margin.
+Each **Transport Delivery** is one trip. The delivery stores the truck class, optional destination/route note, optional weight, selected customer rate, selected transporter rate, customer amount, transporter amount, and margin. For above-10-tonne trips it also requires destination and actual distance KM.
 
 When a delivery is saved, choose the **Rate Category**:
 
-- **Under 10 Tonnes** uses the fixed truck-capacity rates.
-- **10 Tonnes and Above** uses the destination route matrix.
+- **Under 10 Tonnes** uses the fixed truck-capacity rates. Destination is optional and actual KM is not required because invoice quantity is `1`.
+- **10 Tonnes and Above** uses the destination route matrix and requires actual KM because the invoice amount is rate * KM.
 
 For above-10-tonne rate rows, enter **From KM** and **To KM** for the distance band. The delivery matches the row where from_km <= actual_distance_km <= to_km. Leave **To KM** blank for open-ended ranges like 500 KMs and Above.
 

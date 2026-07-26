@@ -1,9 +1,10 @@
-﻿import frappe
+import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, getdate
 
 from transporter_invoice.transport_invoicing.invoice_links import set_if_has_field
+from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import get_invoice_item_description
 
 
 class TransportBillingBatch(Document):
@@ -184,15 +185,7 @@ def create_sales_invoice(batch_name):
 				"item_code": settings.sales_item,
 				"qty": quantity,
 				"rate": delivery.customer_rate,
-				"description": _(
-					"{0}: Transport to {1}; band {2}; actual distance {3} KM; truck {4}"
-				).format(
-					delivery.delivery_reference,
-					delivery.destination,
-					delivery.distance_band,
-					delivery.actual_distance_km,
-					delivery.truck_class,
-				),
+				"description": get_invoice_item_description(delivery, include_reference=True),
 				"cost_center": settings.sales_cost_center,
 			},
 		)

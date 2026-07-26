@@ -12,6 +12,28 @@ class TestTransportDelivery(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			delivery._validate_delivery_details()
 
+	def test_under_10_delivery_does_not_require_destination_or_km(self):
+		delivery = frappe.new_doc("Transport Delivery")
+		delivery.rate_category = "Under 10 Tonnes"
+		delivery.truck_class = "3 MT"
+		delivery.actual_distance_km = 42
+
+		delivery._validate_delivery_details()
+
+		self.assertEqual(delivery.actual_distance_km, 0)
+
+	def test_above_10_delivery_requires_destination_and_km(self):
+		delivery = frappe.new_doc("Transport Delivery")
+		delivery.rate_category = "10 Tonnes and Above"
+		delivery.truck_class = "10 MT"
+
+		with self.assertRaises(frappe.ValidationError):
+			delivery._validate_delivery_details()
+
+		delivery.destination = "Thika Town"
+		with self.assertRaises(frappe.ValidationError):
+			delivery._validate_delivery_details()
+
 	def test_rate_card_rejects_duplicate_location(self):
 		card = frappe.new_doc("Transport Rate Card")
 		card.company = "_Test Company"

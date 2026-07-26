@@ -1,4 +1,4 @@
-﻿import frappe
+import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, getdate
@@ -47,14 +47,19 @@ class TransportDelivery(Document):
 	def _validate_delivery_details(self):
 		if self.rate_category not in {"Under 10 Tonnes", "10 Tonnes and Above"}:
 			frappe.throw(_("Select a valid rate category."))
-		if self.rate_category == "Under 10 Tonnes" and self.truck_class not in UNDER_10_TRUCK_CLASSES:
-			frappe.throw(_("Under 10 Tonnes deliveries must use 1.5 MT, 3 MT, 5 MT, or 7 MT."))
-		if self.rate_category == "10 Tonnes and Above" and self.truck_class not in ABOVE_10_TRUCK_CLASSES:
-			frappe.throw(_("10 Tonnes and Above deliveries must use 10 MT, 14 MT, or Trailer."))
+		if self.rate_category == "Under 10 Tonnes":
+			if self.truck_class not in UNDER_10_TRUCK_CLASSES:
+				frappe.throw(_("Under 10 Tonnes deliveries must use 1.5 MT, 3 MT, 5 MT, or 7 MT."))
+			self.actual_distance_km = 0
+		if self.rate_category == "10 Tonnes and Above":
+			if self.truck_class not in ABOVE_10_TRUCK_CLASSES:
+				frappe.throw(_("10 Tonnes and Above deliveries must use 10 MT, 14 MT, or Trailer."))
+			if not self.destination:
+				frappe.throw(_("Destination is required for 10 Tonnes and Above route matrix deliveries."))
+			if flt(self.actual_distance_km) <= 0:
+				frappe.throw(_("Actual Distance (KM) must be greater than zero for above-10-tonne deliveries."))
 		if self.truck_class not in UNDER_10_TRUCK_CLASSES | ABOVE_10_TRUCK_CLASSES:
 			frappe.throw(_("Select a valid truck class."))
-		if self.rate_category == "10 Tonnes and Above" and flt(self.actual_distance_km) <= 0:
-			frappe.throw(_("Actual Distance (KM) must be greater than zero for above-10-tonne deliveries."))
 
 	def _validate_configured_company(self):
 		configured_company = frappe.db.get_value("Transport Invoice Settings", {}, "company")
@@ -344,15 +349,7 @@ def _create_invoice(delivery_name, invoice_doctype):
 			"item_code": item_code,
 			"qty": quantity,
 			"rate": rate,
-			"description": _(
-				"Transport to {0}; band {1}; actual distance {2} KM; truck {3}; vehicle {4}"
-			).format(
-				delivery.destination,
-				delivery.distance_band,
-				delivery.actual_distance_km,
-				delivery.truck_class,
-				delivery.vehicle_registration or "-",
-			),
+			"description": get_invoice_item_description(delivery),
 			"cost_center": cost_center,
 		},
 	)
@@ -366,3 +363,31 @@ def _create_invoice(delivery_name, invoice_doctype):
 	delivery.db_set(link_field, invoice.name, update_modified=False)
 	return invoice.name
 
+
+def get_invoice_item_description(delivery, include_reference=False):
+	prefix = ""
+	if include_reference and delivery.delivery_reference:
+		prefix = _("{0}: ").format(delivery.delivery_reference)
+
+	vehicle = delivery.vehicle_registration or "-"
+	if delivery.rate_unit == "Per Km":
+		return prefix + _(
+			"Transport to {0}; band {1}; actual distance {2} KM; truck {3}; vehicle {4}"
+		).format(
+			delivery.destination or "-",
+			delivery.distance_band or "-",
+			delivery.actual_distance_km,
+			delivery.truck_class,
+			vehicle,
+		)
+
+	destination = (delivery.destination or "").strip()
+	delivery_label = _("Transport fixed small-truck trip")
+	if destination:
+		delivery_label = _("{0} to {1}").format(delivery_label, destination)
+
+	return prefix + _("{0}; truck {1}; vehicle {2}").format(
+		delivery_label,
+		delivery.truck_class,
+		vehicle,
+	)

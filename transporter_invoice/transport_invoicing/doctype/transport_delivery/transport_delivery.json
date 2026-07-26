@@ -87,15 +87,15 @@
                        "label":  "Delivery"
                    },
                    {
-                       "description":  "Enter the location exactly as listed in the rate matrix, for example Thika Town or Mombasa.",
+                       "description":  "Required for 10 Tonnes and Above route matrix rates. Optional route note for under-10 fixed trips.",
                        "fieldname":  "destination",
                        "fieldtype":  "Data",
                        "in_list_view":  1,
                        "label":  "Destination",
-                       "reqd":  1
+                       "reqd":  0
                    },
                    {
-                       "default":  "10 Tonnes and Above",
+                       "default":  "Under 10 Tonnes",
                        "fieldname":  "rate_category",
                        "fieldtype":  "Select",
                        "in_list_view":  1,
@@ -112,13 +112,13 @@
                        "reqd":  1
                    },
                    {
-                       "description":  "Used as invoice quantity for above-10-tonne rates.",
+                       "description":  "Required for 10 Tonnes and Above. Used as invoice quantity for per-KM rates.",
                        "fieldname":  "actual_distance_km",
                        "fieldtype":  "Float",
                        "in_list_view":  1,
                        "label":  "Actual Distance (KM)",
                        "precision":  "2",
-                       "reqd":  1
+                       "reqd":  0
                    },
                    {
                        "description":  "Optional supporting delivery information. Above-10 rates use actual KM, not weight.",

@@ -1,5 +1,10 @@
-﻿frappe.ui.form.on("Transport Delivery", {
+const UNDER_10_TRUCK_CLASSES = ["1.5 MT", "3 MT", "5 MT", "7 MT"];
+const ABOVE_10_TRUCK_CLASSES = ["10 MT", "14 MT", "Trailer"];
+
+frappe.ui.form.on("Transport Delivery", {
 	refresh(frm) {
+		set_category_fields(frm);
+
 		if (frm.doc.docstatus !== 1) {
 			return;
 		}
@@ -15,11 +20,42 @@
 	customer: clear_applied_rate,
 	delivery_date: clear_applied_rate,
 	destination: clear_applied_rate,
-	rate_category: clear_applied_rate,
+
+	rate_category(frm) {
+		set_category_fields(frm);
+		clear_applied_rate(frm);
+	},
+
 	truck_class: clear_applied_rate,
 	actual_distance_km: clear_applied_rate,
 	actual_weight_kg: clear_applied_rate,
 });
+
+function set_category_fields(frm) {
+	const is_under_10 = frm.doc.rate_category === "Under 10 Tonnes";
+	const options = is_under_10 ? UNDER_10_TRUCK_CLASSES : ABOVE_10_TRUCK_CLASSES;
+
+	frm.set_df_property("truck_class", "options", options.join("\n"));
+	if (frm.doc.truck_class && !options.includes(frm.doc.truck_class)) {
+		frm.set_value("truck_class", null);
+	}
+
+	frm.set_df_property("destination", "reqd", !is_under_10);
+	frm.set_df_property("actual_distance_km", "reqd", !is_under_10);
+	frm.set_df_property("actual_distance_km", "hidden", is_under_10);
+	frm.set_df_property(
+		"destination",
+		"description",
+		is_under_10
+			? __("Optional route note for this fixed small-truck trip.")
+			: __("Enter the location exactly as listed in the rate matrix, for example Thika Town or Mombasa.")
+	);
+	frm.set_df_property(
+		"actual_distance_km",
+		"description",
+		__("Required for 10 Tonnes and Above. Used as invoice quantity for per-KM rates.")
+	);
+}
 
 function clear_applied_rate(frm) {
 	frm.set_value({
@@ -46,4 +82,3 @@ function call_invoice_method(frm, method) {
 		},
 	});
 }
-
