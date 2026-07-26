@@ -1,4 +1,4 @@
-﻿import frappe
+import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, getdate
@@ -116,12 +116,15 @@ class TransportRateCard(Document):
 					)
 
 	def _validate_overlapping_card(self):
+		if self.docstatus == 0:
+			return
+
 		candidates = frappe.get_all(
 			"Transport Rate Card",
 			filters={
 				"company": self.company,
 				"rate_category": self.rate_category,
-				"docstatus": ["<", 2],
+				"docstatus": 1,
 				"name": ["!=", self.name],
 				"effective_from": ["<=", self.effective_to or "9999-12-31"],
 			},
