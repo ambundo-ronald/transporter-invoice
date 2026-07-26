@@ -137,9 +137,10 @@
                        "fieldname":  "delivery_reference",
                        "fieldtype":  "Data",
                        "in_list_view":  1,
-                       "label":  "Delivery Reference",
-                       "reqd":  1,
-                       "unique":  1
+                       "label":  "External Delivery Reference",
+                       "reqd":  0,
+                       "unique":  0,
+                       "description":  "Optional external reference such as waybill, POD, customer order, or manual trip note. The Transport Delivery ID is the main audit reference."
                    },
                    {
                        "fieldname":  "proof_of_delivery",
@@ -295,6 +296,6 @@
     "states":  [
 
                ],
-    "title_field":  "delivery_reference",
+    "title_field":  "name",
     "track_changes":  1
 }

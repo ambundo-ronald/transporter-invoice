@@ -21,7 +21,7 @@ or transporter has a special rate, create another submitted card for the same ma
 set that Customer and/or Transporter. During delivery entry, the app automatically uses
 the most specific matching card first.
 
-Each **Transport Delivery** is one trip. The delivery stores the truck class, optional destination/route note, optional weight, selected customer rate, selected transporter rate, customer amount, transporter amount, and margin. For above-10-tonne trips it also requires destination and actual distance KM.
+Each **Transport Delivery** is one trip. The Transport Delivery document ID is the main audit reference used on linked invoices. The delivery stores the truck class, optional destination/route note, optional weight, selected customer rate, selected transporter rate, customer amount, transporter amount, and margin. For above-10-tonne trips it also requires destination and actual distance KM.
 
 When a delivery is saved, choose the **Rate Category**:
 
@@ -53,6 +53,8 @@ Use this flow when the customer is billed once per month:
 5. Click **Get Unbilled Deliveries** to pull all submitted trips not yet billed to the customer.
 6. Submit the batch.
 7. Click **Create Sales Invoice** to create one customer invoice with one line per trip.
+
+The optional **External Delivery Reference** can hold a waybill, POD, customer order, or manual note, but it is not required and it is not the main audit ID.
 
 The generated Sales Invoice is written back to every included Transport Delivery, so the
 same trip cannot be billed to the customer twice.

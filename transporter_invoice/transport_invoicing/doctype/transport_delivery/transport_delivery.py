@@ -340,9 +340,9 @@ def _create_invoice(delivery_name, invoice_doctype):
 	invoice.set_posting_time = 1
 	invoice.set(party_field, party)
 	set_if_has_field(invoice, "custom_transport_delivery", delivery.name)
-	invoice.remarks = _("Created from Transport Delivery {0} ({1}).").format(
-		delivery.name, delivery.delivery_reference
-	)
+	invoice.remarks = _("Created from Transport Delivery {0}.").format(delivery.name)
+	if delivery.delivery_reference:
+		invoice.remarks += " " + _("External Reference: {0}.").format(delivery.delivery_reference)
 	item = invoice.append(
 		"items",
 		{
@@ -366,8 +366,10 @@ def _create_invoice(delivery_name, invoice_doctype):
 
 def get_invoice_item_description(delivery, include_reference=False):
 	prefix = ""
-	if include_reference and delivery.delivery_reference:
-		prefix = _("{0}: ").format(delivery.delivery_reference)
+	if include_reference:
+		prefix = _("{0}: ").format(delivery.name)
+		if delivery.delivery_reference:
+			prefix += _("Ref {0}: ").format(delivery.delivery_reference)
 
 	vehicle = delivery.vehicle_registration or "-"
 	if delivery.rate_unit == "Per Km":

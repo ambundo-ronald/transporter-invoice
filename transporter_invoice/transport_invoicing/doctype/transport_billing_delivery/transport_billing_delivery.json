@@ -40,7 +40,7 @@
                        "fieldname":  "delivery_reference",
                        "fieldtype":  "Data",
                        "in_list_view":  1,
-                       "label":  "Delivery Reference",
+                       "label":  "External Reference",
                        "read_only":  1
                    },
                    {

@@ -2,6 +2,8 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, nowdate
 
+from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import get_invoice_item_description
+
 
 class TestTransportDelivery(FrappeTestCase):
 	def test_delivery_requires_valid_truck_class(self):
@@ -34,6 +36,19 @@ class TestTransportDelivery(FrappeTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			delivery._validate_delivery_details()
 
+	def test_invoice_description_uses_delivery_id_before_external_reference(self):
+		delivery = frappe._dict(
+			name="TD-TEST-0001",
+			delivery_reference="WAYBILL-77",
+			rate_unit="Fixed Trip Amount",
+			destination="",
+			truck_class="3 MT",
+			vehicle_registration="KAA 123A",
+		)
+
+		description = get_invoice_item_description(delivery, include_reference=True)
+
+		self.assertTrue(description.startswith("TD-TEST-0001: Ref WAYBILL-77:"))
 	def test_rate_card_rejects_duplicate_location(self):
 		card = frappe.new_doc("Transport Rate Card")
 		card.company = "_Test Company"
