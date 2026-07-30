@@ -296,6 +296,6 @@
     "states":  [
 
                ],
-    "title_field":  "name",
+    "title_field":  "",
     "track_changes":  1
 }
