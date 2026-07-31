@@ -350,10 +350,12 @@ def _create_invoice(delivery_name, invoice_doctype):
 		},
 	)
 	set_if_has_field(item, "custom_transport_delivery", delivery.name)
+	invoice.flags.ignore_permissions = True
 	invoice.set_missing_values()
 	invoice.calculate_taxes_and_totals()
-	invoice.insert()
+	invoice.insert(ignore_permissions=True)
 	if settings.auto_submit_invoices:
+		invoice.flags.ignore_permissions = True
 		invoice.submit()
 
 	delivery.db_set(link_field, invoice.name, update_modified=False)

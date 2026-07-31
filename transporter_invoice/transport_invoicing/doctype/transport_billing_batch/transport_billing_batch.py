@@ -191,10 +191,12 @@ def create_sales_invoice(batch_name):
 		)
 		set_if_has_field(item, "custom_transport_delivery", delivery.name)
 
+	invoice.flags.ignore_permissions = True
 	invoice.set_missing_values()
 	invoice.calculate_taxes_and_totals()
-	invoice.insert()
+	invoice.insert(ignore_permissions=True)
 	if settings.auto_submit_invoices:
+		invoice.flags.ignore_permissions = True
 		invoice.submit()
 
 	batch.db_set("sales_invoice", invoice.name, update_modified=False)
