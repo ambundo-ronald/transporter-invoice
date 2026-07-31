@@ -9,9 +9,21 @@ frappe.ui.form.on("Transport Delivery", {
 			return;
 		}
 
+		if (!frm.doc.sales_invoice && !frm.doc.billing_batch) {
+			frm.add_custom_button(__("Sales Invoice"), () => {
+				call_invoice_method(frm, "create_sales_invoice");
+			}, __("Create"));
+		}
+
 		if (!frm.doc.purchase_invoice) {
 			frm.add_custom_button(__("Purchase Invoice"), () => {
 				call_invoice_method(frm, "create_purchase_invoice");
+			}, __("Create"));
+		}
+
+		if (!frm.doc.sales_invoice && !frm.doc.billing_batch && !frm.doc.purchase_invoice) {
+			frm.add_custom_button(__("Sales + Purchase Invoices"), () => {
+				call_invoice_method(frm, "create_both_invoices");
 			}, __("Create"));
 		}
 	},
