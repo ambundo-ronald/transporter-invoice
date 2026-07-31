@@ -46,7 +46,7 @@ as full trip amounts. Under-10-tonne rate cards are forced to fixed trip amount.
 Use this flow when the customer is billed once per month:
 
 1. Create one **Transport Delivery** for every trip.
-2. Submit the delivery after proof of delivery is attached.
+2. Submit the delivery when the trip details are correct. Proof of delivery is optional and can be attached later.
 3. Create a **Purchase Invoice** from each delivery when you need to pay the rider,
    driver, or vehicle owner.
 4. At month end, create a **Transport Billing Batch** for the customer and period.

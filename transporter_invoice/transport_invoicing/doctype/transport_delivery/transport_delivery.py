@@ -24,10 +24,6 @@ class TransportDelivery(Document):
 		self._apply_rate()
 		self._validate_linked_invoices()
 
-	def before_submit(self):
-		if not self.proof_of_delivery:
-			frappe.throw(_("Attach proof of delivery before submitting."))
-
 	def on_cancel(self):
 		active_invoices = []
 		for doctype, invoice_name in (
