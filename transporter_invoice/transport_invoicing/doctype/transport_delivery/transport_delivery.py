@@ -1,7 +1,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, getdate
+from frappe.utils import cint, flt, getdate
 
 from transporter_invoice.transport_invoicing.invoice_links import set_if_has_field
 
@@ -25,18 +25,29 @@ class TransportDelivery(Document):
 		self._validate_linked_invoices()
 
 	def on_cancel(self):
-		active_invoices = []
-		for doctype, invoice_name in (
-			("Sales Invoice", self.sales_invoice),
-			("Purchase Invoice", self.purchase_invoice),
+		submitted_invoices = []
+		for doctype, fieldname, invoice_name in (
+			("Sales Invoice", "sales_invoice", self.sales_invoice),
+			("Purchase Invoice", "purchase_invoice", self.purchase_invoice),
 		):
-			if invoice_name and frappe.db.get_value(doctype, invoice_name, "docstatus") != 2:
-				active_invoices.append(invoice_name)
+			if not invoice_name:
+				continue
 
-		if active_invoices:
+			docstatus = frappe.db.get_value(doctype, invoice_name, "docstatus")
+			if docstatus is None:
+				self.db_set(fieldname, None, update_modified=False)
+				continue
+
+			if cint(docstatus) == 1:
+				submitted_invoices.append(invoice_name)
+			elif cint(docstatus) == 0:
+				_unlink_draft_invoice(doctype, invoice_name)
+				self.db_set(fieldname, None, update_modified=False)
+
+		if submitted_invoices:
 			frappe.throw(
-				_("Cancel the linked invoices before cancelling this delivery: {0}").format(
-					", ".join(active_invoices)
+				_("Cancel the submitted linked invoices before cancelling this delivery: {0}").format(
+					", ".join(submitted_invoices)
 				)
 			)
 
@@ -283,6 +294,27 @@ def create_both_invoices(delivery_name):
 		"sales_invoice": sales_invoice,
 		"purchase_invoice": purchase_invoice,
 	}
+
+
+def _unlink_draft_invoice(doctype, invoice_name):
+	if frappe.get_meta(doctype).has_field("custom_transport_delivery"):
+		frappe.db.set_value(
+			doctype,
+			invoice_name,
+			"custom_transport_delivery",
+			None,
+			update_modified=False,
+		)
+
+	child_doctype = "Sales Invoice Item" if doctype == "Sales Invoice" else "Purchase Invoice Item"
+	if frappe.get_meta(child_doctype).has_field("custom_transport_delivery"):
+		frappe.db.set_value(
+			child_doctype,
+			{"parent": invoice_name},
+			"custom_transport_delivery",
+			None,
+			update_modified=False,
+		)
 
 
 def _create_invoice(delivery_name, invoice_doctype):
