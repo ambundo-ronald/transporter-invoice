@@ -18,4 +18,14 @@ doc_events = {
 		"after_insert": "transporter_invoice.transport_invoicing.seed_data.create_default_rate_cards",
 		"on_update": "transporter_invoice.transport_invoicing.seed_data.create_default_rate_cards",
 	},
+	"Sales Invoice": {
+		"before_validate": "transporter_invoice.transport_invoicing.invoice_permissions.allow_generated_transport_invoice_submit",
+		"validate": "transporter_invoice.transport_invoicing.invoice_permissions.allow_generated_transport_invoice_submit",
+		"before_submit": "transporter_invoice.transport_invoicing.invoice_permissions.allow_generated_transport_invoice_submit",
+	},
+	"Purchase Invoice": {
+		"before_validate": "transporter_invoice.transport_invoicing.invoice_permissions.allow_generated_transport_invoice_submit",
+		"validate": "transporter_invoice.transport_invoicing.invoice_permissions.allow_generated_transport_invoice_submit",
+		"before_submit": "transporter_invoice.transport_invoicing.invoice_permissions.allow_generated_transport_invoice_submit",
+	},
 }
