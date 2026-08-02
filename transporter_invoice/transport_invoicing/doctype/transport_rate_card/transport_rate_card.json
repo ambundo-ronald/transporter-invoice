@@ -19,7 +19,8 @@
                         "effective_to",
                         "rates_section",
                         "rates",
-                        "notes"
+                        "notes",
+                        "amended_from"
                     ],
     "fields":  [
                    {
@@ -109,6 +110,15 @@
                        "fieldname":  "notes",
                        "fieldtype":  "Small Text",
                        "label":  "Notes"
+                   },
+                   {
+                       "fieldname":  "amended_from",
+                       "fieldtype":  "Link",
+                       "label":  "Amended From",
+                       "no_copy":  1,
+                       "options":  "Transport Rate Card",
+                       "print_hide":  1,
+                       "read_only":  1
                    }
                ],
     "index_web_pages_for_search":  1,

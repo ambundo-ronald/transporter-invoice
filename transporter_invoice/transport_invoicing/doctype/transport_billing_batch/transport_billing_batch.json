@@ -1,154 +1,170 @@
 {
- "actions": [],
- "allow_rename": 0,
- "autoname": "format:TBB-{company_abbr}-{from_date}-{#####}",
- "creation": "2026-07-19 00:00:00.000000",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "company",
-  "company_abbr",
-  "customer",
-  "date_section",
-  "from_date",
-  "to_date",
-  "posting_date",
-  "deliveries_section",
-  "deliveries",
-  "total_customer_amount",
-  "invoice_section",
-  "sales_invoice",
-  "notes"
- ],
- "fields": [
-  {
-   "fieldname": "company",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Company",
-   "options": "Company",
-   "reqd": 1
-  },
-  {
-   "fetch_from": "company.abbr",
-   "fieldname": "company_abbr",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Company Abbreviation",
-   "read_only": 1
-  },
-  {
-   "fieldname": "customer",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Customer",
-   "options": "Customer",
-   "reqd": 1
-  },
-  {
-   "fieldname": "date_section",
-   "fieldtype": "Section Break",
-   "label": "Billing Period"
-  },
-  {
-   "fieldname": "from_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "From Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "to_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "To Date",
-   "reqd": 1
-  },
-  {
-   "default": "Today",
-   "fieldname": "posting_date",
-   "fieldtype": "Date",
-   "label": "Invoice Posting Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "deliveries_section",
-   "fieldtype": "Section Break",
-   "label": "Trips to Bill"
-  },
-  {
-   "fieldname": "deliveries",
-   "fieldtype": "Table",
-   "label": "Deliveries",
-   "options": "Transport Billing Delivery",
-   "reqd": 1
-  },
-  {
-   "fieldname": "total_customer_amount",
-   "fieldtype": "Currency",
-   "in_list_view": 1,
-   "label": "Total Customer Amount",
-   "read_only": 1
-  },
-  {
-   "fieldname": "invoice_section",
-   "fieldtype": "Section Break",
-   "label": "Invoice"
-  },
-  {
-   "fieldname": "sales_invoice",
-   "fieldtype": "Link",
-   "label": "Sales Invoice",
-   "no_copy": 1,
-   "options": "Sales Invoice",
-   "read_only": 1
-  },
-  {
-   "fieldname": "notes",
-   "fieldtype": "Small Text",
-   "label": "Notes"
-  }
- ],
- "index_web_pages_for_search": 1,
- "is_submittable": 1,
- "links": [],
- "modified": "2026-07-19 00:00:00.000000",
- "modified_by": "Administrator",
- "module": "Transport Invoicing",
- "name": "Transport Billing Batch",
- "naming_rule": "Expression",
- "owner": "Administrator",
- "permissions": [
-  {
-   "cancel": 1,
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Accounts Manager",
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Accounts User",
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  }
- ],
- "sort_field": "from_date",
- "sort_order": "DESC",
- "states": [],
- "title_field": "customer",
- "track_changes": 1
+    "actions":  [
+
+                ],
+    "allow_rename":  0,
+    "autoname":  "format:TBB-{company_abbr}-{from_date}-{#####}",
+    "creation":  "2026-07-19 00:00:00.000000",
+    "doctype":  "DocType",
+    "engine":  "InnoDB",
+    "field_order":  [
+                        "company",
+                        "company_abbr",
+                        "customer",
+                        "date_section",
+                        "from_date",
+                        "to_date",
+                        "posting_date",
+                        "deliveries_section",
+                        "deliveries",
+                        "total_customer_amount",
+                        "invoice_section",
+                        "sales_invoice",
+                        "notes",
+                        "amended_from"
+                    ],
+    "fields":  [
+                   {
+                       "fieldname":  "company",
+                       "fieldtype":  "Link",
+                       "in_list_view":  1,
+                       "label":  "Company",
+                       "options":  "Company",
+                       "reqd":  1
+                   },
+                   {
+                       "fetch_from":  "company.abbr",
+                       "fieldname":  "company_abbr",
+                       "fieldtype":  "Data",
+                       "hidden":  1,
+                       "label":  "Company Abbreviation",
+                       "read_only":  1
+                   },
+                   {
+                       "fieldname":  "customer",
+                       "fieldtype":  "Link",
+                       "in_list_view":  1,
+                       "label":  "Customer",
+                       "options":  "Customer",
+                       "reqd":  1
+                   },
+                   {
+                       "fieldname":  "date_section",
+                       "fieldtype":  "Section Break",
+                       "label":  "Billing Period"
+                   },
+                   {
+                       "fieldname":  "from_date",
+                       "fieldtype":  "Date",
+                       "in_list_view":  1,
+                       "label":  "From Date",
+                       "reqd":  1
+                   },
+                   {
+                       "fieldname":  "to_date",
+                       "fieldtype":  "Date",
+                       "in_list_view":  1,
+                       "label":  "To Date",
+                       "reqd":  1
+                   },
+                   {
+                       "default":  "Today",
+                       "fieldname":  "posting_date",
+                       "fieldtype":  "Date",
+                       "label":  "Invoice Posting Date",
+                       "reqd":  1
+                   },
+                   {
+                       "fieldname":  "deliveries_section",
+                       "fieldtype":  "Section Break",
+                       "label":  "Trips to Bill"
+                   },
+                   {
+                       "fieldname":  "deliveries",
+                       "fieldtype":  "Table",
+                       "label":  "Deliveries",
+                       "options":  "Transport Billing Delivery",
+                       "reqd":  1
+                   },
+                   {
+                       "fieldname":  "total_customer_amount",
+                       "fieldtype":  "Currency",
+                       "in_list_view":  1,
+                       "label":  "Total Customer Amount",
+                       "read_only":  1
+                   },
+                   {
+                       "fieldname":  "invoice_section",
+                       "fieldtype":  "Section Break",
+                       "label":  "Invoice"
+                   },
+                   {
+                       "fieldname":  "sales_invoice",
+                       "fieldtype":  "Link",
+                       "label":  "Sales Invoice",
+                       "no_copy":  1,
+                       "options":  "Sales Invoice",
+                       "read_only":  1
+                   },
+                   {
+                       "fieldname":  "notes",
+                       "fieldtype":  "Small Text",
+                       "label":  "Notes"
+                   },
+                   {
+                       "fieldname":  "amended_from",
+                       "fieldtype":  "Link",
+                       "label":  "Amended From",
+                       "no_copy":  1,
+                       "options":  "Transport Billing Batch",
+                       "print_hide":  1,
+                       "read_only":  1
+                   }
+               ],
+    "index_web_pages_for_search":  1,
+    "is_submittable":  1,
+    "links":  [
+
+              ],
+    "modified":  "2026-07-19 00:00:00.000000",
+    "modified_by":  "Administrator",
+    "module":  "Transport Invoicing",
+    "name":  "Transport Billing Batch",
+    "naming_rule":  "Expression",
+    "owner":  "Administrator",
+    "permissions":  [
+                        {
+                            "cancel":  1,
+                            "create":  1,
+                            "delete":  1,
+                            "email":  1,
+                            "export":  1,
+                            "print":  1,
+                            "read":  1,
+                            "report":  1,
+                            "role":  "Accounts Manager",
+                            "share":  1,
+                            "submit":  1,
+                            "write":  1
+                        },
+                        {
+                            "create":  1,
+                            "email":  1,
+                            "export":  1,
+                            "print":  1,
+                            "read":  1,
+                            "report":  1,
+                            "role":  "Accounts User",
+                            "share":  1,
+                            "submit":  1,
+                            "write":  1
+                        }
+                    ],
+    "sort_field":  "from_date",
+    "sort_order":  "DESC",
+    "states":  [
+
+               ],
+    "title_field":  "customer",
+    "track_changes":  1
 }
