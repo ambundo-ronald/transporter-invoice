@@ -191,6 +191,7 @@ def create_sales_invoice(batch_name):
 		)
 		set_if_has_field(item, "custom_transport_delivery", delivery.name)
 
+	frappe.flags.ignore_permissions = True
 	invoice.flags.ignore_permissions = True
 	invoice.set_missing_values()
 	invoice.calculate_taxes_and_totals()

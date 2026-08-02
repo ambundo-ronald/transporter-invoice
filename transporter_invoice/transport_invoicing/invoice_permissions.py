@@ -18,6 +18,7 @@ def allow_generated_transport_invoice_submit(doc, method=None):
 	if not _is_generated_transport_invoice(doc):
 		return
 
+	frappe.flags.ignore_permissions = True
 	doc.flags.ignore_permissions = True
 	for row in getattr(doc, "items", []) or []:
 		row.flags.ignore_permissions = True
