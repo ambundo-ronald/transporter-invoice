@@ -4,6 +4,7 @@ from frappe.model.document import Document
 from frappe.utils import flt, getdate
 
 from transporter_invoice.transport_invoicing.invoice_links import set_if_has_field
+from transporter_invoice.transport_invoicing.invoice_permissions import transport_invoice_permission_context
 from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import get_invoice_item_description
 
 
@@ -191,14 +192,12 @@ def create_sales_invoice(batch_name):
 		)
 		set_if_has_field(item, "custom_transport_delivery", delivery.name)
 
-	frappe.flags.ignore_permissions = True
-	invoice.flags.ignore_permissions = True
-	invoice.set_missing_values()
-	invoice.calculate_taxes_and_totals()
-	invoice.insert(ignore_permissions=True)
-	if settings.auto_submit_invoices:
-		invoice.flags.ignore_permissions = True
-		invoice.submit()
+	with transport_invoice_permission_context(invoice):
+		invoice.set_missing_values()
+		invoice.calculate_taxes_and_totals()
+		invoice.insert(ignore_permissions=True)
+		if settings.auto_submit_invoices:
+			invoice.submit()
 
 	batch.db_set("sales_invoice", invoice.name, update_modified=False)
 	for row in batch.deliveries:

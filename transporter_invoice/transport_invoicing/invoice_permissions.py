@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 import frappe
 
 
@@ -18,10 +20,24 @@ def allow_generated_transport_invoice_submit(doc, method=None):
 	if not _is_generated_transport_invoice(doc):
 		return
 
+	allow_transport_invoice_permissions(doc)
+
+
+def allow_transport_invoice_permissions(doc):
 	frappe.flags.ignore_permissions = True
 	doc.flags.ignore_permissions = True
 	for row in getattr(doc, "items", []) or []:
 		row.flags.ignore_permissions = True
+
+
+@contextmanager
+def transport_invoice_permission_context(doc):
+	previous = getattr(frappe.flags, "ignore_permissions", None)
+	allow_transport_invoice_permissions(doc)
+	try:
+		yield
+	finally:
+		frappe.flags.ignore_permissions = previous
 
 
 def _is_generated_transport_invoice(doc):
