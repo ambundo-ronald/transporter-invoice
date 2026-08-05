@@ -2,3 +2,4 @@
 
 [post_model_sync]
 transporter_invoice.patches.v1_0.create_default_rate_cards
+transporter_invoice.patches.v1_0.create_july_2026_above_10_rate_card
