@@ -5,7 +5,7 @@ from frappe.utils import flt, getdate
 
 from transporter_invoice.transport_invoicing.invoice_links import set_if_has_field
 from transporter_invoice.transport_invoicing.invoice_permissions import transport_invoice_permission_context
-from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import get_invoice_item_description
+from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import get_invoice_item_description, set_invoice_item_transport_details
 
 
 class TransportBillingBatch(Document):
@@ -191,6 +191,7 @@ def create_sales_invoice(batch_name):
 			},
 		)
 		set_if_has_field(item, "custom_transport_delivery", delivery.name)
+		set_invoice_item_transport_details(item, delivery, delivery.customer_rate)
 
 	with transport_invoice_permission_context(invoice):
 		invoice.set_missing_values()

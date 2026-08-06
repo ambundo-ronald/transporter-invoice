@@ -383,6 +383,7 @@ def _create_invoice(delivery_name, invoice_doctype):
 		},
 	)
 	set_if_has_field(item, "custom_transport_delivery", delivery.name)
+	set_invoice_item_transport_details(item, delivery, rate)
 	with transport_invoice_permission_context(invoice):
 		invoice.set_missing_values()
 		invoice.calculate_taxes_and_totals()
@@ -422,4 +423,17 @@ def get_invoice_item_description(delivery, include_reference=False):
 		delivery_label,
 		delivery.truck_class,
 		vehicle,
+	)
+
+
+def set_invoice_item_transport_details(item, delivery, rate):
+	set_if_has_field(item, "custom_destination", delivery.destination)
+	set_if_has_field(item, "custom_truck_no", delivery.vehicle_registration)
+	set_if_has_field(item, "custom_truck_type", delivery.truck_class)
+	set_if_has_field(item, "custom_net_weight_kg", flt(delivery.actual_weight_kg))
+	set_if_has_field(item, "custom_transport_rate", flt(rate))
+	set_if_has_field(
+		item,
+		"custom_km_amount",
+		flt(delivery.actual_distance_km) if delivery.rate_unit == "Per Km" else None,
 	)
