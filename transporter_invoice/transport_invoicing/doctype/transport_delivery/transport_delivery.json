@@ -19,6 +19,8 @@
                         "truck_class",
                         "actual_distance_km",
                         "actual_weight_kg",
+                        "under_10_trips_section",
+                        "under_10_trips",
                         "vehicle_registration",
                         "delivery_reference",
                         "proof_of_delivery",
@@ -122,12 +124,27 @@
                        "reqd":  0
                    },
                    {
-                       "description":  "Optional supporting delivery information. Above-10 rates use actual KM, not weight.",
+                       "description":  "For under-10 deliveries this is the total trip weight used to prorate the fixed tonne rate. It is auto-filled from trip rows when rows are added.",
                        "fieldname":  "actual_weight_kg",
                        "fieldtype":  "Float",
                        "label":  "Actual Weight (Kg)",
                        "precision":  "2",
                        "reqd":  0
+                   },
+                   {
+                       "collapsible":  1,
+                       "depends_on":  "eval:doc.rate_category==\"Under 10 Tonnes\"",
+                       "fieldname":  "under_10_trips_section",
+                       "fieldtype":  "Section Break",
+                       "label":  "Under-10 Trip Rows"
+                   },
+                   {
+                       "description":  "Add one row per trip for under-10 deliveries. The total Weight (KG) is used to prorate the selected fixed tonne rate.",
+                       "depends_on":  "eval:doc.rate_category==\"Under 10 Tonnes\"",
+                       "fieldname":  "under_10_trips",
+                       "fieldtype":  "Table",
+                       "label":  "Under-10 Trips",
+                       "options":  "Transport Delivery Trip"
                    },
                    {
                        "fieldname":  "vehicle_registration",

@@ -41,6 +41,23 @@ frappe.ui.form.on("Transport Delivery", {
 	truck_class: clear_applied_rate,
 	actual_distance_km: clear_applied_rate,
 	actual_weight_kg: clear_applied_rate,
+
+	under_10_trips_remove(frm) {
+		update_under_10_total_weight(frm);
+		clear_applied_rate(frm);
+	},
+});
+
+frappe.ui.form.on("Transport Delivery Trip", {
+	weight_kg(frm) {
+		update_under_10_total_weight(frm);
+		clear_applied_rate(frm);
+	},
+
+	under_10_trips_remove(frm) {
+		update_under_10_total_weight(frm);
+		clear_applied_rate(frm);
+	},
 });
 
 function set_category_fields(frm) {
@@ -55,6 +72,8 @@ function set_category_fields(frm) {
 	frm.set_df_property("destination", "reqd", !is_under_10);
 	frm.set_df_property("actual_distance_km", "reqd", !is_under_10);
 	frm.set_df_property("actual_distance_km", "hidden", is_under_10);
+	frm.set_df_property("under_10_trips_section", "hidden", !is_under_10);
+	frm.set_df_property("under_10_trips", "hidden", !is_under_10);
 	frm.set_df_property(
 		"destination",
 		"description",
@@ -67,6 +86,25 @@ function set_category_fields(frm) {
 		"description",
 		__("Required for 10 Tonnes and Above. Used as invoice quantity for per-KM rates.")
 	);
+	frm.set_df_property(
+		"actual_weight_kg",
+		"description",
+		is_under_10
+			? __("Total trip weight used to prorate the fixed under-10 tonne rate. Auto-filled from trip rows when rows are added.")
+			: __("Optional supporting delivery information. Above-10 rates use actual KM, not weight.")
+	);
+}
+
+function update_under_10_total_weight(frm) {
+	if (frm.doc.rate_category !== "Under 10 Tonnes") {
+		return;
+	}
+
+	const rows = frm.doc.under_10_trips || [];
+	const total_weight = rows.reduce((total, row) => total + flt(row.weight_kg), 0);
+	if (rows.length) {
+		frm.set_value("actual_weight_kg", total_weight);
+	}
 }
 
 function clear_applied_rate(frm) {

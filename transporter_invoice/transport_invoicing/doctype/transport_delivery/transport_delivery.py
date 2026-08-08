@@ -13,6 +13,12 @@ TRUCK_RATE_FIELDS = {
 	"Trailer": ("customer_trailer_rate", "transporter_28mt_rate"),
 }
 UNDER_10_TRUCK_CLASSES = {"1.5 MT", "3 MT", "5 MT", "7 MT"}
+UNDER_10_CAPACITY_KG = {
+	"1.5 MT": 1500,
+	"3 MT": 3000,
+	"5 MT": 5000,
+	"7 MT": 7000,
+}
 ABOVE_10_TRUCK_CLASSES = set(TRUCK_RATE_FIELDS)
 
 
@@ -58,6 +64,8 @@ class TransportDelivery(Document):
 		if self.rate_category == "Under 10 Tonnes":
 			if self.truck_class not in UNDER_10_TRUCK_CLASSES:
 				frappe.throw(_("Under 10 Tonnes deliveries must use 1.5 MT, 3 MT, 5 MT, or 7 MT."))
+			self._set_under_10_trip_weight()
+			self._validate_under_10_weight()
 			self.actual_distance_km = 0
 		if self.rate_category == "10 Tonnes and Above":
 			if self.truck_class not in ABOVE_10_TRUCK_CLASSES:
@@ -68,6 +76,30 @@ class TransportDelivery(Document):
 				frappe.throw(_("Actual Distance (KM) must be greater than zero for above-10-tonne deliveries."))
 		if self.truck_class not in UNDER_10_TRUCK_CLASSES | ABOVE_10_TRUCK_CLASSES:
 			frappe.throw(_("Select a valid truck class."))
+
+	def _set_under_10_trip_weight(self):
+		total_weight = 0
+		for row in self.get("under_10_trips") or []:
+			if flt(row.weight_kg) <= 0:
+				frappe.throw(_("Weight (KG) must be greater than zero for every under-10 trip row."))
+			total_weight += flt(row.weight_kg)
+
+		if total_weight:
+			self.actual_weight_kg = total_weight
+
+	def _validate_under_10_weight(self):
+		total_weight = flt(self.actual_weight_kg)
+		if total_weight <= 0:
+			frappe.throw(_("Actual Weight (Kg) is required for under-10 deliveries. Add trip rows or enter the total weight."))
+
+		capacity = UNDER_10_CAPACITY_KG.get(self.truck_class)
+		if capacity and total_weight > capacity:
+			frappe.throw(
+				_("Total under-10 trip weight {0} KG is above the selected truck class capacity of {1} KG. Select a larger truck class.").format(
+					total_weight,
+					capacity,
+				)
+			)
 
 	def _validate_configured_company(self):
 		configured_company = frappe.db.get_value("Transport Invoice Settings", {}, "company")
@@ -107,7 +139,7 @@ class TransportDelivery(Document):
 		self.customer_rate = rate.customer_rate
 		self.transporter_rate = rate.transporter_rate
 
-		quantity = flt(self.actual_distance_km) if rate.rate_unit == "Per Km" else 1
+		quantity = get_invoice_quantity(self)
 		self.customer_amount = quantity * flt(rate.customer_rate)
 		self.transporter_amount = quantity * flt(rate.transporter_rate)
 		self.margin = flt(self.customer_amount) - flt(self.transporter_amount)
@@ -361,7 +393,7 @@ def _create_invoice(delivery_name, invoice_doctype):
 	rate = delivery.customer_rate if is_sales else delivery.transporter_rate
 	party_field = "customer" if is_sales else "supplier"
 	party = delivery.customer if is_sales else delivery.transporter
-	quantity = flt(delivery.actual_distance_km) if delivery.rate_unit == "Per Km" else 1
+	quantity = get_invoice_quantity(delivery)
 
 	invoice = frappe.new_doc(invoice_doctype)
 	invoice.company = delivery.company
@@ -419,11 +451,32 @@ def get_invoice_item_description(delivery, include_reference=False):
 	if destination:
 		delivery_label = _("{0} to {1}").format(delivery_label, destination)
 
-	return prefix + _("{0}; truck {1}; vehicle {2}").format(
+	return prefix + _("{0}; truck {1}; total weight {2} KG; billed quantity {3}; vehicle {4}").format(
 		delivery_label,
 		delivery.truck_class,
+		flt(delivery.actual_weight_kg),
+		get_invoice_quantity(delivery),
 		vehicle,
 	)
+
+
+def get_invoice_quantity(delivery):
+	if delivery.rate_unit == "Per Km":
+		return flt(delivery.actual_distance_km)
+
+	if delivery.rate_category == "Under 10 Tonnes":
+		return get_under_10_weight_factor(delivery)
+
+	return 1
+
+
+def get_under_10_weight_factor(delivery):
+	capacity = UNDER_10_CAPACITY_KG.get(delivery.truck_class)
+	weight = flt(delivery.actual_weight_kg)
+	if not capacity or weight <= 0:
+		return 1
+
+	return min(weight / capacity, 1)
 
 
 def set_invoice_item_transport_details(item, delivery, rate):

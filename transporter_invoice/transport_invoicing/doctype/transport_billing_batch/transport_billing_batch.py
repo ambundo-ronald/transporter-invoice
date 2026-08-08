@@ -5,7 +5,7 @@ from frappe.utils import flt, getdate
 
 from transporter_invoice.transport_invoicing.invoice_links import set_if_has_field
 from transporter_invoice.transport_invoicing.invoice_permissions import transport_invoice_permission_context
-from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import get_invoice_item_description, set_invoice_item_transport_details
+from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import get_invoice_item_description, get_invoice_quantity, set_invoice_item_transport_details
 
 
 class TransportBillingBatch(Document):
@@ -179,7 +179,7 @@ def create_sales_invoice(batch_name):
 					delivery.name, delivery.sales_invoice
 				)
 			)
-		quantity = flt(delivery.actual_distance_km) if delivery.rate_unit == "Per Km" else 1
+		quantity = get_invoice_quantity(delivery)
 		item = invoice.append(
 			"items",
 			{

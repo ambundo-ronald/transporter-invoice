@@ -2,7 +2,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, nowdate
 
-from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import get_invoice_item_description
+from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import get_invoice_item_description, get_invoice_quantity
 
 
 class TestTransportDelivery(FrappeTestCase):
@@ -19,10 +19,24 @@ class TestTransportDelivery(FrappeTestCase):
 		delivery.rate_category = "Under 10 Tonnes"
 		delivery.truck_class = "3 MT"
 		delivery.actual_distance_km = 42
+		delivery.actual_weight_kg = 1500
 
 		delivery._validate_delivery_details()
 
 		self.assertEqual(delivery.actual_distance_km, 0)
+
+	def test_under_10_quantity_is_prorated_by_total_weight(self):
+		delivery = frappe._dict(
+			rate_unit="Fixed Trip Amount",
+			rate_category="Under 10 Tonnes",
+			truck_class="1.5 MT",
+			actual_weight_kg=750,
+		)
+
+		self.assertEqual(get_invoice_quantity(delivery), 0.5)
+
+		delivery.actual_weight_kg = 1500
+		self.assertEqual(get_invoice_quantity(delivery), 1)
 
 	def test_above_10_delivery_requires_destination_and_km(self):
 		delivery = frappe.new_doc("Transport Delivery")
