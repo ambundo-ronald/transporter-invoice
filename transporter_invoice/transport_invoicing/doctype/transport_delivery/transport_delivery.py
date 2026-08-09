@@ -369,27 +369,48 @@ def _get_above_10_rate(cards, destination, truck_class, delivery_date):
 def get_route_location_options(company, delivery_date=None, customer=None, transporter=None, rate_category="10 Tonnes and Above"):
 	if not company:
 		return []
+
 	filters = {"company": company, "rate_category": rate_category, "docstatus": 1}
+	or_filters = None
 	if delivery_date:
 		filters["effective_from"] = ["<=", getdate(delivery_date)]
+		or_filters = [
+			["effective_to", "is", "not set"],
+			["effective_to", ">=", getdate(delivery_date)],
+		]
+
 	cards = frappe.get_list(
 		"Transport Rate Card",
 		filters=filters,
-		or_filters=[
-			["effective_to", "is", "not set"],
-			["effective_to", ">=", getdate(delivery_date)] if delivery_date else ["effective_to", "is", "not set"],
-		],
+		or_filters=or_filters,
 		fields=["name", "customer", "transporter", "effective_from"],
 		order_by="effective_from desc",
 	)
-	cards = [card for card in cards if (not card.customer or card.customer == customer) and (not card.transporter or card.transporter == transporter)]
+	cards = [
+		card
+		for card in cards
+		if (not card.customer or card.customer == customer)
+		and (not card.transporter or card.transporter == transporter)
+	]
+	if not cards:
+		return []
+
 	locations = frappe.get_all(
 		"Transport Rate",
-		filters={"parent": ["in", [card.name for card in cards] or [""]], "parenttype": "Transport Rate Card"},
-		fields=["distinct location as location"],
+		filters={"parent": ["in", [card.name for card in cards]], "parenttype": "Transport Rate Card"},
+		fields=["location"],
 		order_by="location asc",
 	)
-	return [row.location for row in locations if row.location]
+	seen = set()
+	options = []
+	for row in locations:
+		location = (row.location or "").strip()
+		location_key = location.casefold()
+		if not location or location_key in seen:
+			continue
+		seen.add(location_key)
+		options.append(location)
+	return options
 
 
 @frappe.whitelist()
