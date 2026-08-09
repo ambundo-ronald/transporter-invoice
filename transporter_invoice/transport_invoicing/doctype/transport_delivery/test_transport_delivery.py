@@ -2,7 +2,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, nowdate
 
-from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import get_invoice_item_description, get_invoice_quantity
+from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import get_above_10_truck_class, get_invoice_item_description, get_invoice_quantity
 
 
 class TestTransportDelivery(FrappeTestCase):
@@ -38,17 +38,30 @@ class TestTransportDelivery(FrappeTestCase):
 		delivery.actual_weight_kg = 1500
 		self.assertEqual(get_invoice_quantity(delivery), 1)
 
-	def test_above_10_delivery_requires_destination_and_km(self):
+	def test_above_10_delivery_uses_weight_for_truck_class_without_km(self):
 		delivery = frappe.new_doc("Transport Delivery")
 		delivery.rate_category = "10 Tonnes and Above"
-		delivery.truck_class = "10 MT"
-
-		with self.assertRaises(frappe.ValidationError):
-			delivery._validate_delivery_details()
-
 		delivery.destination = "Thika Town"
-		with self.assertRaises(frappe.ValidationError):
-			delivery._validate_delivery_details()
+		delivery.actual_weight_kg = 12000
+
+		delivery._validate_delivery_details()
+
+		self.assertEqual(delivery.truck_class, "14 MT")
+
+	def test_above_10_truck_class_from_weight(self):
+		self.assertEqual(get_above_10_truck_class(10000), "10 MT")
+		self.assertEqual(get_above_10_truck_class(14000), "14 MT")
+		self.assertEqual(get_above_10_truck_class(20000), "Trailer")
+
+	def test_above_10_fixed_quantity_is_one(self):
+		delivery = frappe._dict(
+			rate_unit="Fixed Trip Amount",
+			rate_category="10 Tonnes and Above",
+			truck_class="10 MT",
+			actual_distance_km=80,
+		)
+
+		self.assertEqual(get_invoice_quantity(delivery), 1)
 
 	def test_invoice_description_uses_delivery_id_before_external_reference(self):
 		delivery = frappe._dict(

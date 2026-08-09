@@ -57,7 +57,7 @@
                    },
                    {
                        "default":  "10 Tonnes and Above",
-                       "description":  "Under 10 Tonnes uses fixed trip amounts by truck capacity. 10 Tonnes and Above uses the route matrix rates.",
+                       "description":  "Both under-10 and over-10 rate cards use fixed trip amounts. Over-10 picks the destination row and truck column from weight.",
                        "fieldname":  "rate_category",
                        "fieldtype":  "Select",
                        "in_list_view":  1,
@@ -66,8 +66,8 @@
                        "reqd":  1
                    },
                    {
-                       "default":  "Per Km",
-                       "description":  "Above-10-tonne decimal rates are multiplied by actual KM. Under-10-tonne rates are fixed trip amounts.",
+                       "default":  "Fixed Trip Amount",
+                       "description":  "Rates are treated as flat trip amounts. Over-10 decimal values are not multiplied by KM.",
                        "fieldname":  "rate_unit",
                        "fieldtype":  "Select",
                        "in_list_view":  1,

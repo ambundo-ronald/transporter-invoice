@@ -19,7 +19,13 @@ UNDER_10_CAPACITY_KG = {
 	"5 MT": 5000,
 	"7 MT": 7000,
 }
+ABOVE_10_CAPACITY_KG = {
+	"10 MT": 10000,
+	"14 MT": 14000,
+	"Trailer": 28000,
+}
 ABOVE_10_TRUCK_CLASSES = set(TRUCK_RATE_FIELDS)
+ABOVE_10_HEADER_TRUCK_CLASSES = ABOVE_10_TRUCK_CLASSES | {"Mixed"}
 
 
 class TransportDelivery(Document):
@@ -68,13 +74,8 @@ class TransportDelivery(Document):
 			self._validate_under_10_weight()
 			self.actual_distance_km = 0
 		if self.rate_category == "10 Tonnes and Above":
-			if self.truck_class not in ABOVE_10_TRUCK_CLASSES:
-				frappe.throw(_("10 Tonnes and Above deliveries must use 10 MT, 14 MT, or Trailer."))
-			if not self.destination:
-				frappe.throw(_("Destination is required for 10 Tonnes and Above route matrix deliveries."))
-			if flt(self.actual_distance_km) <= 0:
-				frappe.throw(_("Actual Distance (KM) must be greater than zero for above-10-tonne deliveries."))
-		if self.truck_class not in UNDER_10_TRUCK_CLASSES | ABOVE_10_TRUCK_CLASSES:
+			self._set_above_10_trip_details()
+		if self.truck_class not in UNDER_10_TRUCK_CLASSES | ABOVE_10_HEADER_TRUCK_CLASSES:
 			frappe.throw(_("Select a valid truck class."))
 
 	def _set_under_10_trip_weight(self):
@@ -101,6 +102,33 @@ class TransportDelivery(Document):
 				)
 			)
 
+	def _set_above_10_trip_details(self):
+		trip_rows = self.get("above_10_trips") or []
+		if trip_rows:
+			truck_classes = set()
+			total_weight = 0
+			for row in trip_rows:
+				row.destination = (row.destination or "").strip()
+				if not row.destination:
+					frappe.throw(_("Row {0}: Destination is required for above-10 trip rows.").format(row.idx))
+				if flt(row.weight_kg) <= 0:
+					frappe.throw(_("Row {0}: Weight (KG) must be greater than zero for above-10 trip rows.").format(row.idx))
+				row.truck_class = get_above_10_truck_class(row.weight_kg)
+				truck_classes.add(row.truck_class)
+				total_weight += flt(row.weight_kg)
+
+			self.actual_weight_kg = total_weight
+			self.truck_class = truck_classes.pop() if len(truck_classes) == 1 else "Mixed"
+			if len(trip_rows) == 1:
+				self.destination = trip_rows[0].destination
+			return
+
+		if not self.destination:
+			frappe.throw(_("Destination is required for 10 Tonnes and Above deliveries."))
+		if flt(self.actual_weight_kg) <= 0:
+			frappe.throw(_("Actual Weight (Kg) is required for 10 Tonnes and Above deliveries."))
+		self.truck_class = get_above_10_truck_class(self.actual_weight_kg)
+
 	def _validate_configured_company(self):
 		configured_company = frappe.db.get_value("Transport Invoice Settings", {}, "company")
 		if not configured_company:
@@ -120,6 +148,10 @@ class TransportDelivery(Document):
 
 	def _apply_rate(self):
 		if self.docstatus == 1:
+			return
+
+		if self.rate_category == "10 Tonnes and Above" and self.get("above_10_trips"):
+			self._apply_above_10_trip_rates()
 			return
 
 		rate = get_applicable_rate(
@@ -142,6 +174,41 @@ class TransportDelivery(Document):
 		quantity = get_invoice_quantity(self)
 		self.customer_amount = quantity * flt(rate.customer_rate)
 		self.transporter_amount = quantity * flt(rate.transporter_rate)
+		self.margin = flt(self.customer_amount) - flt(self.transporter_amount)
+
+	def _apply_above_10_trip_rates(self):
+		self.customer_amount = 0
+		self.transporter_amount = 0
+		self.customer_rate = 0
+		self.transporter_rate = 0
+		self.rate_unit = "Fixed Trip Amount"
+		rate_cards = set()
+		distance_bands = set()
+		for row in self.get("above_10_trips") or []:
+			rate = get_applicable_rate(
+				company=self.company,
+				customer=self.customer,
+				transporter=self.transporter,
+				delivery_date=self.delivery_date,
+				destination=row.destination,
+				rate_category=self.rate_category,
+				truck_class=row.truck_class,
+			)
+			row.rate_card = rate.rate_card
+			row.rate_row = rate.rate_row
+			row.distance_band = rate.distance_band
+			row.customer_rate = rate.customer_rate
+			row.transporter_rate = rate.transporter_rate
+			row.customer_amount = flt(rate.customer_rate)
+			row.transporter_amount = flt(rate.transporter_rate)
+			self.customer_amount += flt(row.customer_amount)
+			self.transporter_amount += flt(row.transporter_amount)
+			rate_cards.add(rate.rate_card)
+			distance_bands.add(rate.distance_band)
+
+		self.rate_card = next(iter(rate_cards)) if len(rate_cards) == 1 else None
+		self.rate_row = None
+		self.distance_band = next(iter(distance_bands)) if len(distance_bands) == 1 else "Multiple"
 		self.margin = flt(self.customer_amount) - flt(self.transporter_amount)
 
 	def _validate_linked_invoices(self):
@@ -185,8 +252,6 @@ def get_applicable_rate(company, customer, transporter, delivery_date, destinati
 		frappe.throw(_("10 Tonnes and Above deliveries must use 10 MT, 14 MT, or Trailer."))
 	if rate_category == "10 Tonnes and Above" and not (destination or "").strip():
 		frappe.throw(_("Destination is required for 10 Tonnes and Above route matrix rates."))
-	if rate_category == "10 Tonnes and Above" and flt(actual_distance_km) <= 0:
-		frappe.throw(_("Actual Distance (KM) must be greater than zero for above-10-tonne rates."))
 
 	cards = frappe.get_list(
 		"Transport Rate Card",
@@ -221,7 +286,7 @@ def get_applicable_rate(company, customer, transporter, delivery_date, destinati
 	if rate_category == "Under 10 Tonnes":
 		return _get_under_10_rate(cards, truck_class)
 
-	return _get_above_10_rate(cards, destination, truck_class, delivery_date, actual_distance_km)
+	return _get_above_10_rate(cards, destination, truck_class, delivery_date)
 
 
 def _get_under_10_rate(cards, truck_class):
@@ -259,9 +324,8 @@ def _get_under_10_rate(cards, truck_class):
 	)
 
 
-def _get_above_10_rate(cards, destination, truck_class, delivery_date, actual_distance_km):
+def _get_above_10_rate(cards, destination, truck_class, delivery_date):
 	destination_key = destination.strip().casefold()
-	actual_distance = flt(actual_distance_km)
 	customer_field, transporter_field = TRUCK_RATE_FIELDS[truck_class]
 	for card in cards:
 		rows = frappe.get_all(
@@ -272,10 +336,6 @@ def _get_above_10_rate(cards, destination, truck_class, delivery_date, actual_di
 		)
 		for row in rows:
 			if (row.location or "").strip().casefold() != destination_key:
-				continue
-			if actual_distance < flt(row.from_km):
-				continue
-			if row.to_km and actual_distance > flt(row.to_km):
 				continue
 			customer_rate = flt(row.get(customer_field))
 			transporter_rate = flt(row.get(transporter_field))
@@ -291,7 +351,7 @@ def _get_above_10_rate(cards, destination, truck_class, delivery_date, actual_di
 				rate_card=card.name,
 				rate_row=row.name,
 				distance_band=row.distance_band,
-				rate_unit=card.rate_unit,
+				rate_unit="Fixed Trip Amount",
 				customer_rate=customer_rate,
 				transporter_rate=transporter_rate,
 			)
@@ -303,6 +363,33 @@ def _get_above_10_rate(cards, destination, truck_class, delivery_date, actual_di
 			frappe.bold(delivery_date),
 		)
 	)
+
+
+@frappe.whitelist()
+def get_route_location_options(company, delivery_date=None, customer=None, transporter=None, rate_category="10 Tonnes and Above"):
+	if not company:
+		return []
+	filters = {"company": company, "rate_category": rate_category, "docstatus": 1}
+	if delivery_date:
+		filters["effective_from"] = ["<=", getdate(delivery_date)]
+	cards = frappe.get_list(
+		"Transport Rate Card",
+		filters=filters,
+		or_filters=[
+			["effective_to", "is", "not set"],
+			["effective_to", ">=", getdate(delivery_date)] if delivery_date else ["effective_to", "is", "not set"],
+		],
+		fields=["name", "customer", "transporter", "effective_from"],
+		order_by="effective_from desc",
+	)
+	cards = [card for card in cards if (not card.customer or card.customer == customer) and (not card.transporter or card.transporter == transporter)]
+	locations = frappe.get_all(
+		"Transport Rate",
+		filters={"parent": ["in", [card.name for card in cards] or [""]], "parenttype": "Transport Rate Card"},
+		fields=["distinct location as location"],
+		order_by="location asc",
+	)
+	return [row.location for row in locations if row.location]
 
 
 @frappe.whitelist()
@@ -390,10 +477,8 @@ def _create_invoice(delivery_name, invoice_doctype):
 
 	item_code = settings.sales_item if is_sales else settings.purchase_item
 	cost_center = settings.sales_cost_center if is_sales else settings.purchase_cost_center
-	rate = delivery.customer_rate if is_sales else delivery.transporter_rate
 	party_field = "customer" if is_sales else "supplier"
 	party = delivery.customer if is_sales else delivery.transporter
-	quantity = get_invoice_quantity(delivery)
 
 	invoice = frappe.new_doc(invoice_doctype)
 	invoice.company = delivery.company
@@ -404,18 +489,7 @@ def _create_invoice(delivery_name, invoice_doctype):
 	invoice.remarks = _("Created from Transport Delivery {0}.").format(delivery.name)
 	if delivery.delivery_reference:
 		invoice.remarks += " " + _("External Reference: {0}.").format(delivery.delivery_reference)
-	item = invoice.append(
-		"items",
-		{
-			"item_code": item_code,
-			"qty": quantity,
-			"rate": rate,
-			"description": get_invoice_item_description(delivery),
-			"cost_center": cost_center,
-		},
-	)
-	set_if_has_field(item, "custom_transport_delivery", delivery.name)
-	set_invoice_item_transport_details(item, delivery, rate)
+	append_transport_invoice_items(invoice, delivery, item_code, cost_center, is_sales)
 	with transport_invoice_permission_context(invoice):
 		invoice.set_missing_values()
 		invoice.calculate_taxes_and_totals()
@@ -427,6 +501,39 @@ def _create_invoice(delivery_name, invoice_doctype):
 	return invoice.name
 
 
+def append_transport_invoice_items(invoice, delivery, item_code, cost_center, is_sales, include_reference=False):
+	if delivery.rate_category == "10 Tonnes and Above" and delivery.get("above_10_trips"):
+		for row in delivery.get("above_10_trips") or []:
+			rate = flt(row.customer_rate) if is_sales else flt(row.transporter_rate)
+			item = invoice.append(
+				"items",
+				{
+					"item_code": item_code,
+					"qty": 1,
+					"rate": rate,
+					"description": get_above_10_trip_description(delivery, row, include_reference=include_reference),
+					"cost_center": cost_center,
+				},
+			)
+			set_if_has_field(item, "custom_transport_delivery", delivery.name)
+			set_invoice_item_transport_details(item, delivery, rate, row=row)
+		return
+
+	rate = delivery.customer_rate if is_sales else delivery.transporter_rate
+	item = invoice.append(
+		"items",
+		{
+			"item_code": item_code,
+			"qty": get_invoice_quantity(delivery),
+			"rate": rate,
+			"description": get_invoice_item_description(delivery, include_reference=include_reference),
+			"cost_center": cost_center,
+		},
+	)
+	set_if_has_field(item, "custom_transport_delivery", delivery.name)
+	set_invoice_item_transport_details(item, delivery, rate)
+
+
 def get_invoice_item_description(delivery, include_reference=False):
 	prefix = ""
 	if include_reference:
@@ -435,6 +542,17 @@ def get_invoice_item_description(delivery, include_reference=False):
 			prefix += _("Ref {0}: ").format(delivery.delivery_reference)
 
 	vehicle = delivery.vehicle_registration or "-"
+	if delivery.rate_category == "10 Tonnes and Above":
+		return prefix + _(
+			"Transport to {0}; band {1}; truck {2}; total weight {3} KG; vehicle {4}"
+		).format(
+			delivery.destination or "-",
+			delivery.distance_band or "-",
+			delivery.truck_class,
+			flt(delivery.actual_weight_kg),
+			vehicle,
+		)
+
 	if delivery.rate_unit == "Per Km":
 		return prefix + _(
 			"Transport to {0}; band {1}; actual distance {2} KM; truck {3}; vehicle {4}"
@@ -460,14 +578,41 @@ def get_invoice_item_description(delivery, include_reference=False):
 	)
 
 
+def get_above_10_trip_description(delivery, row, include_reference=False):
+	prefix = _("{0}: ").format(delivery.name) if include_reference else ""
+	if include_reference and delivery.delivery_reference:
+		prefix += _("Ref {0}: ").format(delivery.delivery_reference)
+	vehicle = delivery.vehicle_registration or "-"
+	return prefix + _("Transport to {0}; band {1}; truck {2}; weight {3} KG; vehicle {4}").format(
+		row.destination or "-",
+		row.distance_band or "-",
+		row.truck_class or "-",
+		flt(row.weight_kg),
+		vehicle,
+	)
+
+
 def get_invoice_quantity(delivery):
-	if delivery.rate_unit == "Per Km":
+	if delivery.rate_unit == "Per Km" and delivery.rate_category != "10 Tonnes and Above":
 		return flt(delivery.actual_distance_km)
 
 	if delivery.rate_category == "Under 10 Tonnes":
 		return get_under_10_weight_factor(delivery)
 
 	return 1
+
+
+def get_above_10_truck_class(weight_kg):
+	weight = flt(weight_kg)
+	if weight <= 0:
+		frappe.throw(_("Weight (KG) must be greater than zero."))
+	if weight <= ABOVE_10_CAPACITY_KG["10 MT"]:
+		return "10 MT"
+	if weight <= ABOVE_10_CAPACITY_KG["14 MT"]:
+		return "14 MT"
+	if weight <= ABOVE_10_CAPACITY_KG["Trailer"]:
+		return "Trailer"
+	frappe.throw(_("Weight {0} KG is above the Trailer capacity of {1} KG.").format(weight, ABOVE_10_CAPACITY_KG["Trailer"]))
 
 
 def get_under_10_weight_factor(delivery):
@@ -479,11 +624,14 @@ def get_under_10_weight_factor(delivery):
 	return min(weight / capacity, 1)
 
 
-def set_invoice_item_transport_details(item, delivery, rate):
-	set_if_has_field(item, "custom_destination", delivery.destination)
+def set_invoice_item_transport_details(item, delivery, rate, row=None):
+	destination = row.destination if row else delivery.destination
+	truck_class = row.truck_class if row else delivery.truck_class
+	weight_kg = row.weight_kg if row else delivery.actual_weight_kg
+	set_if_has_field(item, "custom_destination", destination)
 	set_if_has_field(item, "custom_truck_no", delivery.vehicle_registration)
-	set_if_has_field(item, "custom_truck_type", delivery.truck_class)
-	set_if_has_field(item, "custom_net_weight_kg", flt(delivery.actual_weight_kg))
+	set_if_has_field(item, "custom_truck_type", truck_class)
+	set_if_has_field(item, "custom_net_weight_kg", flt(weight_kg))
 	set_if_has_field(item, "custom_transport_rate", flt(rate))
 	set_if_has_field(
 		item,

@@ -1,0 +1,132 @@
+{
+    "actions":  [
+
+                ],
+    "creation":  "2026-08-09 00:00:00.000000",
+    "doctype":  "DocType",
+    "editable_grid":  1,
+    "engine":  "InnoDB",
+    "field_order":  [
+                        "trip_reference",
+                        "destination",
+                        "weight_kg",
+                        "truck_class",
+                        "distance_band",
+                        "customer_rate",
+                        "transporter_rate",
+                        "customer_amount",
+                        "transporter_amount",
+                        "rate_card",
+                        "rate_row",
+                        "notes"
+                    ],
+    "fields":  [
+                   {
+                       "columns":  2,
+                       "fieldname":  "trip_reference",
+                       "fieldtype":  "Data",
+                       "in_list_view":  1,
+                       "label":  "Trip Reference"
+                   },
+                   {
+                       "columns":  3,
+                       "fieldname":  "destination",
+                       "fieldtype":  "Autocomplete",
+                       "in_list_view":  1,
+                       "label":  "Destination",
+                       "reqd":  1
+                   },
+                   {
+                       "columns":  2,
+                       "fieldname":  "weight_kg",
+                       "fieldtype":  "Float",
+                       "in_list_view":  1,
+                       "label":  "Weight (KG)",
+                       "precision":  "2",
+                       "reqd":  1
+                   },
+                   {
+                       "columns":  1,
+                       "fieldname":  "truck_class",
+                       "fieldtype":  "Data",
+                       "in_list_view":  1,
+                       "label":  "Truck Class",
+                       "read_only":  1
+                   },
+                   {
+                       "columns":  2,
+                       "fieldname":  "distance_band",
+                       "fieldtype":  "Data",
+                       "in_list_view":  1,
+                       "label":  "Distance Band",
+                       "read_only":  1
+                   },
+                   {
+                       "columns":  1,
+                       "fieldname":  "customer_rate",
+                       "fieldtype":  "Currency",
+                       "label":  "Customer Rate",
+                       "precision":  "4",
+                       "read_only":  1
+                   },
+                   {
+                       "columns":  1,
+                       "fieldname":  "transporter_rate",
+                       "fieldtype":  "Currency",
+                       "label":  "Transporter Rate",
+                       "precision":  "4",
+                       "read_only":  1
+                   },
+                   {
+                       "columns":  1,
+                       "fieldname":  "customer_amount",
+                       "fieldtype":  "Currency",
+                       "label":  "Customer Amount",
+                       "read_only":  1
+                   },
+                   {
+                       "columns":  1,
+                       "fieldname":  "transporter_amount",
+                       "fieldtype":  "Currency",
+                       "label":  "Transporter Amount",
+                       "read_only":  1
+                   },
+                   {
+                       "fieldname":  "rate_card",
+                       "fieldtype":  "Link",
+                       "hidden":  1,
+                       "label":  "Rate Card",
+                       "options":  "Transport Rate Card",
+                       "read_only":  1
+                   },
+                   {
+                       "fieldname":  "rate_row",
+                       "fieldtype":  "Data",
+                       "hidden":  1,
+                       "label":  "Rate Row",
+                       "read_only":  1
+                   },
+                   {
+                       "fieldname":  "notes",
+                       "fieldtype":  "Small Text",
+                       "label":  "Notes"
+                   }
+               ],
+    "istable":  1,
+    "links":  [
+
+              ],
+    "modified":  "2026-08-09 00:00:00.000000",
+    "modified_by":  "Administrator",
+    "module":  "Transport Invoicing",
+    "name":  "Transport Delivery Above 10 Trip",
+    "owner":  "Administrator",
+    "permissions":  [
+
+                    ],
+    "sort_field":  "modified",
+    "sort_order":  "DESC",
+    "states":  [
+
+               ]
+}

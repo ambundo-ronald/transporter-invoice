@@ -168,7 +168,7 @@ def _create_above_10_card(company, effective_from, rates, notes):
 	card = frappe.new_doc("Transport Rate Card")
 	card.company = company
 	card.rate_category = "10 Tonnes and Above"
-	card.rate_unit = "Per Km"
+	card.rate_unit = "Fixed Trip Amount"
 	card.effective_from = effective_from
 	card.notes = notes
 	for distance_band, locations, c10, c14, ctrailer, t10, t14, t28 in rates:

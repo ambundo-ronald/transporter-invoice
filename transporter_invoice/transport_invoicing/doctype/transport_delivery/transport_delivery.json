@@ -21,6 +21,8 @@
                         "actual_weight_kg",
                         "under_10_trips_section",
                         "under_10_trips",
+                        "above_10_trips_section",
+                        "above_10_trips",
                         "vehicle_registration",
                         "delivery_reference",
                         "proof_of_delivery",
@@ -90,9 +92,9 @@
                        "label":  "Delivery"
                    },
                    {
-                       "description":  "Required for 10 Tonnes and Above route matrix rates. Optional route note for under-10 fixed trips.",
+                       "description":  "Select a location from the submitted rate card. Required for single over-10 deliveries; optional route note for under-10.",
                        "fieldname":  "destination",
-                       "fieldtype":  "Data",
+                       "fieldtype":  "Autocomplete",
                        "in_list_view":  1,
                        "label":  "Destination",
                        "reqd":  0
@@ -111,11 +113,12 @@
                        "fieldtype":  "Select",
                        "in_list_view":  1,
                        "label":  "Truck Class",
-                       "options":  "1.5 MT\n3 MT\n5 MT\n7 MT\n10 MT\n14 MT\nTrailer",
-                       "reqd":  1
+                       "options":  "1.5 MT\n3 MT\n5 MT\n7 MT\n10 MT\n14 MT\nTrailer\nMixed",
+                       "reqd":  1,
+                       "description":  "For over-10 deliveries this is auto-selected from weight. Multiple trip rows may show Mixed."
                    },
                    {
-                       "description":  "Required for 10 Tonnes and Above. Used as invoice quantity for per-KM rates.",
+                       "description":  "Optional audit distance. Over-10 rates are flat by selected location, not multiplied by KM.",
                        "fieldname":  "actual_distance_km",
                        "fieldtype":  "Float",
                        "in_list_view":  1,
@@ -145,6 +148,21 @@
                        "fieldtype":  "Table",
                        "label":  "Under-10 Trips",
                        "options":  "Transport Delivery Trip"
+                   },
+                   {
+                       "collapsible":  1,
+                       "depends_on":  "eval:doc.rate_category==\"10 Tonnes and Above\"",
+                       "fieldname":  "above_10_trips_section",
+                       "fieldtype":  "Section Break",
+                       "label":  "Above-10 Trip Rows"
+                   },
+                   {
+                       "description":  "Add one row per destination/trip for over-10 deliveries. Each row uses destination + weight to choose the flat rate column and amount.",
+                       "depends_on":  "eval:doc.rate_category==\"10 Tonnes and Above\"",
+                       "fieldname":  "above_10_trips",
+                       "fieldtype":  "Table",
+                       "label":  "Above-10 Trips",
+                       "options":  "Transport Delivery Above 10 Trip"
                    },
                    {
                        "fieldname":  "vehicle_registration",
