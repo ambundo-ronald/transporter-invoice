@@ -541,6 +541,9 @@ def append_transport_invoice_items(invoice, delivery, item_code, cost_center, is
 		return
 
 	rate = delivery.customer_rate if is_sales else delivery.transporter_rate
+	detail_row = None
+	if delivery.rate_category == "Under 10 Tonnes" and delivery.get("under_10_trips"):
+		detail_row = delivery.get("under_10_trips")[0]
 	item = invoice.append(
 		"items",
 		{
@@ -552,7 +555,7 @@ def append_transport_invoice_items(invoice, delivery, item_code, cost_center, is
 		},
 	)
 	set_if_has_field(item, "custom_transport_delivery", delivery.name)
-	set_invoice_item_transport_details(item, delivery, rate)
+	set_invoice_item_transport_details(item, delivery, rate, row=detail_row)
 
 
 def get_invoice_item_description(delivery, include_reference=False):
@@ -603,7 +606,7 @@ def get_above_10_trip_description(delivery, row, include_reference=False):
 	prefix = _("{0}: ").format(delivery.name) if include_reference else ""
 	if include_reference and delivery.delivery_reference:
 		prefix += _("Ref {0}: ").format(delivery.delivery_reference)
-	vehicle = delivery.vehicle_registration or "-"
+	vehicle = row.get("truck_no") or delivery.vehicle_registration or "-"
 	return prefix + _("Transport to {0}; band {1}; truck {2}; weight {3} KG; vehicle {4}").format(
 		row.destination or "-",
 		row.distance_band or "-",
@@ -646,11 +649,14 @@ def get_under_10_weight_factor(delivery):
 
 
 def set_invoice_item_transport_details(item, delivery, rate, row=None):
-	destination = row.destination if row else delivery.destination
-	truck_class = row.truck_class if row else delivery.truck_class
-	weight_kg = row.weight_kg if row else delivery.actual_weight_kg
+	destination = row.get("destination") if row else delivery.destination
+	truck_class = row.get("truck_class") if row else delivery.truck_class
+	weight_kg = row.get("weight_kg") if row else delivery.actual_weight_kg
+	trip_reference = row.get("trip_reference") if row else delivery.delivery_reference
+	truck_no = row.get("truck_no") if row else delivery.vehicle_registration
+	set_if_has_field(item, "custom_trip_reference", trip_reference)
 	set_if_has_field(item, "custom_destination", destination)
-	set_if_has_field(item, "custom_truck_no", delivery.vehicle_registration)
+	set_if_has_field(item, "custom_truck_no", truck_no)
 	set_if_has_field(item, "custom_truck_type", truck_class)
 	set_if_has_field(item, "custom_net_weight_kg", flt(weight_kg))
 	set_if_has_field(item, "custom_transport_rate", flt(rate))

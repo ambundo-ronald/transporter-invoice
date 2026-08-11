@@ -8,6 +8,7 @@
     "engine":  "InnoDB",
     "field_order":  [
                         "trip_reference",
+                        "truck_no",
                         "destination",
                         "weight_kg",
                         "truck_class",
@@ -27,6 +28,13 @@
                        "fieldtype":  "Data",
                        "in_list_view":  1,
                        "label":  "Trip Reference"
+                   },
+                   {
+                       "columns":  2,
+                       "fieldname":  "truck_no",
+                       "fieldtype":  "Data",
+                       "in_list_view":  1,
+                       "label":  "Truck No."
                    },
                    {
                        "columns":  3,
