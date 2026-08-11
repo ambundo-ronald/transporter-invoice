@@ -9,6 +9,10 @@ required_apps = ["frappe", "erpnext"]
 
 fixtures = [
 	"Custom Field",
+	{
+		"doctype": "Print Format",
+		"filters": [["name", "in", ["Transport Sales Invoice", "Transport Purchase Invoice"]]],
+	},
 ]
 
 after_install = "transporter_invoice.transport_invoicing.seed_data.create_default_rate_cards"
