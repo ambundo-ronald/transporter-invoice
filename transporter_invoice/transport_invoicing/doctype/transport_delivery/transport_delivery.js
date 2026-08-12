@@ -105,7 +105,7 @@ function set_category_fields(frm) {
 		frm.set_value("truck_class", null);
 	}
 
-	frm.set_df_property("destination", "reqd", !is_under_10 && !(frm.doc.above_10_trips || []).length);
+	frm.set_df_property("destination", "reqd", false);
 	frm.set_df_property("actual_distance_km", "reqd", false);
 	frm.set_df_property("actual_distance_km", "hidden", is_under_10);
 	frm.set_df_property("under_10_trips_section", "hidden", !is_under_10);
