@@ -30,10 +30,11 @@
                    },
                    {
                        "fieldname":  "destination",
-                       "fieldtype":  "Data",
+                       "fieldtype":  "Autocomplete",
                        "in_list_view":  1,
                        "label":  "Destination / Stop",
-                       "columns":  3
+                       "columns":  3,
+                       "description":  "Start typing and select a location from submitted rate card Locations Covered."
                    },
                    {
                        "fieldname":  "weight_kg",

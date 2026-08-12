@@ -29,8 +29,18 @@ frappe.ui.form.on("Transport Delivery", {
 		}
 	},
 
-	company: clear_applied_rate,
-	customer: clear_applied_rate,
+	company(frm) {
+		load_route_location_options(frm);
+		clear_applied_rate(frm);
+	},
+	customer(frm) {
+		load_route_location_options(frm);
+		clear_applied_rate(frm);
+	},
+	transporter(frm) {
+		load_route_location_options(frm);
+		clear_applied_rate(frm);
+	},
 	delivery_date(frm) {
 		load_route_location_options(frm);
 		clear_applied_rate(frm);
@@ -60,9 +70,17 @@ frappe.ui.form.on("Transport Delivery", {
 frappe.ui.form.on("Transport Delivery Above 10 Trip", {
 	destination: clear_applied_rate,
 	weight_kg: clear_applied_rate,
+	form_render(frm) {
+		load_route_location_options(frm);
+	},
 });
 
 frappe.ui.form.on("Transport Delivery Trip", {
+	destination: clear_applied_rate,
+	form_render(frm) {
+		load_route_location_options(frm);
+	},
+
 	weight_kg(frm) {
 		update_under_10_total_weight(frm);
 		clear_applied_rate(frm);
@@ -100,7 +118,7 @@ function set_category_fields(frm) {
 		"description",
 		is_under_10
 			? __("Optional route note for this fixed small-truck trip.")
-			: __("Enter the location exactly as listed in the rate matrix, for example Thika Town or Mombasa.")
+			: __("Start typing and select a submitted rate-card location, for example Thika Town or Mombasa.")
 	);
 	frm.set_df_property(
 		"actual_distance_km",
@@ -117,7 +135,7 @@ function set_category_fields(frm) {
 }
 
 function load_route_location_options(frm) {
-	if (frm.doc.rate_category !== "10 Tonnes and Above" || !frm.doc.company) {
+	if (!frm.doc.company) {
 		return;
 	}
 
@@ -128,13 +146,15 @@ function load_route_location_options(frm) {
 			delivery_date: frm.doc.delivery_date,
 			customer: frm.doc.customer,
 			transporter: frm.doc.transporter,
-			rate_category: frm.doc.rate_category,
+			rate_category: "10 Tonnes and Above",
 		},
 		callback(response) {
 			const options = (response.message || []).join("\n");
 			frm.set_df_property("destination", "options", options);
-			if (frm.fields_dict.above_10_trips) {
-				frm.fields_dict.above_10_trips.grid.update_docfield_property("destination", "options", options);
+			for (const table_field of ["above_10_trips", "under_10_trips"]) {
+				if (frm.fields_dict[table_field]) {
+					frm.fields_dict[table_field].grid.update_docfield_property("destination", "options", options);
+				}
 			}
 		},
 	});

@@ -379,7 +379,7 @@ def get_route_location_options(company, delivery_date=None, customer=None, trans
 			["effective_to", ">=", getdate(delivery_date)],
 		]
 
-	cards = frappe.get_list(
+	cards = frappe.get_all(
 		"Transport Rate Card",
 		filters=filters,
 		or_filters=or_filters,
