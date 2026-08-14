@@ -19,6 +19,7 @@ UNDER_10_CAPACITY_KG = {
 	"5 MT": 5000,
 	"7 MT": 7000,
 }
+UNDER_10_ALLOWANCE_KG = 500
 ABOVE_10_CAPACITY_KG = {
 	"10 MT": 10000,
 	"14 MT": 14000,
@@ -94,11 +95,12 @@ class TransportDelivery(Document):
 			frappe.throw(_("Actual Weight (Kg) is required for under-10 deliveries. Add trip rows or enter the total weight."))
 
 		capacity = UNDER_10_CAPACITY_KG.get(self.truck_class)
-		if capacity and total_weight > capacity:
+		allowed_weight = capacity + UNDER_10_ALLOWANCE_KG if capacity else 0
+		if allowed_weight and total_weight > allowed_weight:
 			frappe.throw(
-				_("Total under-10 trip weight {0} KG is above the selected truck class capacity of {1} KG. Select a larger truck class.").format(
+				_("Total under-10 trip weight {0} KG is above the selected truck class allowance of {1} KG. Select a larger truck class.").format(
 					total_weight,
-					capacity,
+					allowed_weight,
 				)
 			)
 

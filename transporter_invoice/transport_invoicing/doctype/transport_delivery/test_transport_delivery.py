@@ -38,6 +38,20 @@ class TestTransportDelivery(FrappeTestCase):
 		delivery.actual_weight_kg = 1500
 		self.assertEqual(get_invoice_quantity(delivery), 1)
 
+	def test_under_10_allows_half_tonne_tolerance(self):
+		delivery = frappe.new_doc("Transport Delivery")
+		delivery.rate_category = "Under 10 Tonnes"
+		delivery.truck_class = "1.5 MT"
+		delivery.actual_weight_kg = 2000
+
+		delivery._validate_delivery_details()
+
+		self.assertEqual(get_invoice_quantity(delivery), 1)
+
+		delivery.actual_weight_kg = 2000.01
+		with self.assertRaises(frappe.ValidationError):
+			delivery._validate_delivery_details()
+
 	def test_above_10_delivery_uses_weight_for_truck_class_without_km(self):
 		delivery = frappe.new_doc("Transport Delivery")
 		delivery.rate_category = "10 Tonnes and Above"
