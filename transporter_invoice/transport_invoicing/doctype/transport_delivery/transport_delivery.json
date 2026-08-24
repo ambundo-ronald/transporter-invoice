@@ -114,7 +114,7 @@
                        "in_list_view":  1,
                        "label":  "Truck Class",
                        "options":  "1.5 MT\n3 MT\n5 MT\n7 MT\n10 MT\n14 MT\nTrailer\nMixed",
-                       "reqd":  1,
+                       "reqd":  0,
                        "description":  "For over-10 deliveries this is auto-selected from weight. Multiple trip rows may show Mixed."
                    },
                    {
