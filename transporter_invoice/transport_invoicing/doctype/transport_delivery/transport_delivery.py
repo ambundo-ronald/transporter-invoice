@@ -110,7 +110,10 @@ class TransportDelivery(Document):
 			truck_classes = set()
 			total_weight = 0
 			for row in trip_rows:
+				row.trip_date = row.trip_date or self.delivery_date
+				row.truck_no = row.truck_no or self.transporter
 				row.destination = (row.destination or "").strip()
+				row.customer_name = (row.customer_name or "").strip()
 				if not row.destination:
 					frappe.throw(_("Row {0}: Destination is required for above-10 trip rows.").format(row.idx))
 				if flt(row.weight_kg) <= 0:

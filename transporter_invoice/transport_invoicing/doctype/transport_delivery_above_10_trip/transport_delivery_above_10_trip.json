@@ -7,7 +7,9 @@
     "editable_grid":  1,
     "engine":  "InnoDB",
     "field_order":  [
+                        "trip_date",
                         "trip_reference",
+                        "customer_name",
                         "truck_no",
                         "destination",
                         "weight_kg",
@@ -23,6 +25,13 @@
                     ],
     "fields":  [
                    {
+                       "columns":  1,
+                       "fieldname":  "trip_date",
+                       "fieldtype":  "Date",
+                       "in_list_view":  1,
+                       "label":  "Date"
+                   },
+                   {
                        "columns":  2,
                        "fieldname":  "trip_reference",
                        "fieldtype":  "Data",
@@ -31,10 +40,18 @@
                    },
                    {
                        "columns":  2,
+                       "fieldname":  "customer_name",
+                       "fieldtype":  "Data",
+                       "in_list_view":  1,
+                       "label":  "Customer Name"
+                   },
+                   {
+                       "columns":  2,
                        "fieldname":  "truck_no",
                        "fieldtype":  "Data",
                        "in_list_view":  1,
-                       "label":  "Truck No."
+                       "label":  "Truck No.",
+                       "description":  "Defaults from the selected Transporter/Supplier. You can edit it per row."
                    },
                    {
                        "columns":  3,

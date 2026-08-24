@@ -3,6 +3,8 @@ const ABOVE_10_TRUCK_CLASSES = ["10 MT", "14 MT", "Trailer", "Mixed"];
 
 frappe.ui.form.on("Transport Delivery", {
 	refresh(frm) {
+		frm._previous_transporter = frm.doc.transporter;
+		frm._previous_delivery_date = frm.doc.delivery_date;
 		set_category_fields(frm);
 		load_route_location_options(frm);
 
@@ -39,10 +41,18 @@ frappe.ui.form.on("Transport Delivery", {
 	},
 	transporter(frm) {
 		load_route_location_options(frm);
+		fill_default_above_10_trip_values(frm, null, null, {
+			previous_transporter: frm._previous_transporter,
+		});
+		frm._previous_transporter = frm.doc.transporter;
 		clear_applied_rate(frm);
 	},
 	delivery_date(frm) {
 		load_route_location_options(frm);
+		fill_default_above_10_trip_values(frm, null, null, {
+			previous_delivery_date: frm._previous_delivery_date,
+		});
+		frm._previous_delivery_date = frm.doc.delivery_date;
 		clear_applied_rate(frm);
 	},
 	destination: clear_applied_rate,
@@ -62,6 +72,11 @@ frappe.ui.form.on("Transport Delivery", {
 		clear_applied_rate(frm);
 	},
 
+	above_10_trips_add(frm, cdt, cdn) {
+		fill_default_above_10_trip_values(frm, cdt, cdn);
+		update_above_10_truck_classes(frm, cdt, cdn);
+	},
+
 	above_10_trips_remove(frm) {
 		update_above_10_truck_classes(frm);
 		clear_applied_rate(frm);
@@ -69,14 +84,18 @@ frappe.ui.form.on("Transport Delivery", {
 });
 
 frappe.ui.form.on("Transport Delivery Above 10 Trip", {
+	trip_date: clear_applied_rate,
+	customer_name: clear_applied_rate,
+	truck_no: clear_applied_rate,
 	destination: clear_applied_rate,
 	weight_kg(frm, cdt, cdn) {
 		update_above_10_truck_classes(frm, cdt, cdn);
 		clear_applied_rate(frm);
 	},
-	form_render(frm) {
+	form_render(frm, cdt, cdn) {
 		load_route_location_options(frm);
-		update_above_10_truck_classes(frm);
+		fill_default_above_10_trip_values(frm, cdt, cdn);
+		update_above_10_truck_classes(frm, cdt, cdn);
 	},
 });
 
@@ -93,11 +112,6 @@ frappe.ui.form.on("Transport Delivery Trip", {
 
 	under_10_trips_remove(frm) {
 		update_under_10_total_weight(frm);
-		clear_applied_rate(frm);
-	},
-
-	above_10_trips_remove(frm) {
-		update_above_10_truck_classes(frm);
 		clear_applied_rate(frm);
 	},
 });
@@ -179,6 +193,29 @@ function update_under_10_total_weight(frm) {
 	const total_weight = rows.reduce((total, row) => total + flt(row.weight_kg), 0);
 	if (rows.length) {
 		frm.set_value("actual_weight_kg", total_weight);
+	}
+}
+
+function fill_default_above_10_trip_values(frm, cdt, cdn, opts = {}) {
+	if (frm.doc.rate_category !== "10 Tonnes and Above") {
+		return;
+	}
+
+	const rows = frm.doc.above_10_trips || [];
+	for (const row of rows) {
+		if (cdt && cdn && row.name !== cdn) {
+			continue;
+		}
+
+		const can_update_date = !row.trip_date || row.trip_date === opts.previous_delivery_date;
+		if (can_update_date && frm.doc.delivery_date) {
+			frappe.model.set_value(row.doctype, row.name, "trip_date", frm.doc.delivery_date);
+		}
+
+		const can_update_truck_no = !row.truck_no || row.truck_no === opts.previous_transporter;
+		if (can_update_truck_no && frm.doc.transporter) {
+			frappe.model.set_value(row.doctype, row.name, "truck_no", frm.doc.transporter);
+		}
 	}
 }
 
