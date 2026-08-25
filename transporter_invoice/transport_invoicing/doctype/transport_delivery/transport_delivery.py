@@ -701,7 +701,11 @@ def set_invoice_item_transport_details(item, delivery, rate, row=None):
 	weight_kg = (row.get("weight_kg") if row else None) or delivery.actual_weight_kg
 	trip_reference = (row.get("trip_reference") if row else None) or delivery.delivery_reference
 	truck_no = (row.get("truck_no") if row else None) or delivery.vehicle_registration
+	trip_date = (row.get("trip_date") if row else None) or delivery.get("delivery_date")
+	delivery_customer_name = row.get("customer_name") if row else None
+	set_if_has_field(item, "custom_trip_date", trip_date)
 	set_if_has_field(item, "custom_trip_reference", trip_reference)
+	set_if_has_field(item, "custom_delivery_customer_name", delivery_customer_name)
 	set_if_has_field(item, "custom_destination", destination)
 	set_if_has_field(item, "custom_truck_no", truck_no)
 	set_if_has_field(item, "custom_truck_type", truck_class)
