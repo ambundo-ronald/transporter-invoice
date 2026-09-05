@@ -57,7 +57,7 @@
                    },
                    {
                        "default":  "10 Tonnes and Above",
-                       "description":  "Both under-10 and over-10 rate cards use fixed trip amounts. Over-10 picks the destination row and truck column from weight.",
+                       "description":  "Under-10 rate cards use fixed trip amounts. Above-10 rate cards store per-KG rates selected by destination and truck/weight band.",
                        "fieldname":  "rate_category",
                        "fieldtype":  "Select",
                        "in_list_view":  1,
@@ -67,12 +67,12 @@
                    },
                    {
                        "default":  "Fixed Trip Amount",
-                       "description":  "Rates are treated as flat trip amounts. Over-10 decimal values are not multiplied by KM.",
+                       "description":  "Under-10 rates are fixed trip amounts. Above-10 decimal values are per-KG rates multiplied by actual weight KG.",
                        "fieldname":  "rate_unit",
                        "fieldtype":  "Select",
                        "in_list_view":  1,
                        "label":  "Rate Unit",
-                       "options":  "Per Km\nFixed Trip Amount",
+                       "options":  "Per Km\nFixed Trip Amount\nPer KG",
                        "reqd":  1
                    },
                    {

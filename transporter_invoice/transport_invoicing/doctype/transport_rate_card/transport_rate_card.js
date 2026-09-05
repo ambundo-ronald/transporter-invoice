@@ -11,7 +11,7 @@
 		if (frm.doc.rate_category === "Under 10 Tonnes") {
 			frm.set_value("rate_unit", "Fixed Trip Amount");
 		} else if (frm.doc.rate_category === "10 Tonnes and Above") {
-			frm.set_value("rate_unit", "Fixed Trip Amount");
+			frm.set_value("rate_unit", "Per KG");
 		}
 	},
 });

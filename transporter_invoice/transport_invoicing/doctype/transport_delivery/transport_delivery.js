@@ -147,14 +147,14 @@ function set_category_fields(frm) {
 	frm.set_df_property(
 		"actual_distance_km",
 		"description",
-		__("Optional audit distance. Over-10 rates are flat by selected location, not multiplied by KM.")
+		__("Optional audit distance. Above-10 rates are calculated from the selected destination, weight band, and weight KG.")
 	);
 	frm.set_df_property(
 		"actual_weight_kg",
 		"description",
 		is_under_10
 			? __("Total trip weight used to prorate the fixed under-10 tonne rate. Auto-filled from trip rows when rows are added.")
-			: __("Auto-filled from above-10 trip rows. Each row uses destination + weight to choose the flat rate.")
+			: __("Auto-filled from above-10 trip rows. Each row uses destination + weight to choose the per-KG rate.")
 	);
 }
 
@@ -256,10 +256,10 @@ function update_above_10_truck_classes(frm, cdt, cdn) {
 
 function get_above_10_truck_class(weight_kg) {
 	const weight = flt(weight_kg);
-	if (weight <= 10000) {
+	if (weight < 11000) {
 		return "10 MT";
 	}
-	if (weight <= 14000) {
+	if (weight < 15000) {
 		return "14 MT";
 	}
 	return "Trailer";

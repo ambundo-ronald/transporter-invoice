@@ -132,10 +132,56 @@ class TestTransportDelivery(FrappeTestCase):
 
 		self.assertEqual(delivery.truck_class, "14 MT")
 
-	def test_above_10_truck_class_from_weight(self):
-		self.assertEqual(get_above_10_truck_class(10000), "10 MT")
-		self.assertEqual(get_above_10_truck_class(14000), "14 MT")
+	def test_above_10_truck_class_from_weight_with_tolerance(self):
+		for weight in (10000, 10200, 10450, 10600, 10750, 10999.99):
+			self.assertEqual(get_above_10_truck_class(weight), "10 MT")
+
+		self.assertEqual(get_above_10_truck_class(11000), "14 MT")
+		self.assertEqual(get_above_10_truck_class(14999.99), "14 MT")
+		self.assertEqual(get_above_10_truck_class(15000), "Trailer")
 		self.assertEqual(get_above_10_truck_class(20000), "Trailer")
+
+	def test_above_10_trip_invoice_item_uses_amount_but_keeps_rate(self):
+		delivery = frappe._dict(
+			name="TD-TEST-0010",
+			delivery_reference="LOAD-10",
+			delivery_date="2026-09-05",
+			rate_unit="Per KG",
+			rate_category="10 Tonnes and Above",
+			destination="Meru",
+			truck_class="10 MT",
+			vehicle_registration="KAA 123A",
+			actual_distance_km=0,
+			actual_weight_kg=9800,
+			customer_amount=27538,
+			transporter_amount=22540,
+			above_10_trips=[
+				frappe._dict(
+					trip_date="2026-09-05",
+					trip_reference="TRIP-10",
+					customer_name="Bidco",
+					destination="Meru",
+					truck_no="KBA 010A",
+					weight_kg=9800,
+					truck_class="10 MT",
+					distance_band="350-400 KMs",
+					customer_rate=2.81,
+					transporter_rate=2.3,
+					customer_amount=27538,
+					transporter_amount=22540,
+				),
+			],
+		)
+		invoice = _FakeInvoice()
+
+		append_transport_invoice_items(invoice, delivery, "Transport services", "Main - TC", True)
+
+		self.assertEqual(len(invoice.items), 1)
+		self.assertAlmostEqual(invoice.items[0].rate, 27538)
+		self.assertAlmostEqual(invoice.items[0].custom_transport_rate, 2.81)
+		self.assertAlmostEqual(invoice.items[0].custom_net_weight_kg, 9800)
+		self.assertEqual(invoice.items[0].custom_truck_type, "10 MT")
+		self.assertEqual(invoice.items[0].custom_delivery_customer_name, "Bidco")
 
 	def test_above_10_fixed_quantity_is_one(self):
 		delivery = frappe._dict(

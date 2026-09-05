@@ -18,7 +18,7 @@ RATE_FIELDS = (
 
 class TransportRateCard(Document):
 	def validate(self):
-		self.rate_unit = "Fixed Trip Amount"
+		self.rate_unit = "Fixed Trip Amount" if self.rate_category == "Under 10 Tonnes" else "Per KG"
 		self._validate_configured_company()
 		self._validate_dates()
 		self._validate_rates()

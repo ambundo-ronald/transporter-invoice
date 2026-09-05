@@ -21,8 +21,8 @@ UNDER_10_CAPACITY_KG = {
 }
 UNDER_10_ALLOWANCE_KG = 500
 ABOVE_10_CAPACITY_KG = {
-	"10 MT": 10000,
-	"14 MT": 14000,
+	"10 MT": 11000,
+	"14 MT": 15000,
 	"Trailer": 28000,
 }
 ABOVE_10_TRUCK_CLASSES = set(TRUCK_RATE_FIELDS)
@@ -176,7 +176,7 @@ class TransportDelivery(Document):
 		self.customer_rate = rate.customer_rate
 		self.transporter_rate = rate.transporter_rate
 
-		quantity = get_invoice_quantity(self)
+		quantity = flt(self.actual_weight_kg) if self.rate_category == "10 Tonnes and Above" else get_invoice_quantity(self)
 		self.customer_amount = quantity * flt(rate.customer_rate)
 		self.transporter_amount = quantity * flt(rate.transporter_rate)
 		self.margin = flt(self.customer_amount) - flt(self.transporter_amount)
@@ -186,7 +186,7 @@ class TransportDelivery(Document):
 		self.transporter_amount = 0
 		self.customer_rate = 0
 		self.transporter_rate = 0
-		self.rate_unit = "Fixed Trip Amount"
+		self.rate_unit = "Per KG"
 		rate_cards = set()
 		distance_bands = set()
 		for row in self.get("above_10_trips") or []:
@@ -204,8 +204,8 @@ class TransportDelivery(Document):
 			row.distance_band = rate.distance_band
 			row.customer_rate = rate.customer_rate
 			row.transporter_rate = rate.transporter_rate
-			row.customer_amount = flt(rate.customer_rate)
-			row.transporter_amount = flt(rate.transporter_rate)
+			row.customer_amount = flt(rate.customer_rate) * flt(row.weight_kg)
+			row.transporter_amount = flt(rate.transporter_rate) * flt(row.weight_kg)
 			self.customer_amount += flt(row.customer_amount)
 			self.transporter_amount += flt(row.transporter_amount)
 			rate_cards.add(rate.rate_card)
@@ -356,7 +356,7 @@ def _get_above_10_rate(cards, destination, truck_class, delivery_date):
 				rate_card=card.name,
 				rate_row=row.name,
 				distance_band=row.distance_band,
-				rate_unit="Fixed Trip Amount",
+				rate_unit="Per KG",
 				customer_rate=customer_rate,
 				transporter_rate=transporter_rate,
 			)
@@ -535,12 +535,13 @@ def append_transport_invoice_items(invoice, delivery, item_code, cost_center, is
 	if delivery.rate_category == "10 Tonnes and Above" and delivery.get("above_10_trips"):
 		for row in delivery.get("above_10_trips") or []:
 			rate = flt(row.customer_rate) if is_sales else flt(row.transporter_rate)
+			amount = flt(row.customer_amount) if is_sales else flt(row.transporter_amount)
 			item = invoice.append(
 				"items",
 				{
 					"item_code": item_code,
 					"qty": 1,
-					"rate": rate,
+					"rate": amount,
 					"description": get_above_10_trip_description(delivery, row, include_reference=include_reference),
 					"cost_center": cost_center,
 				},
@@ -550,12 +551,15 @@ def append_transport_invoice_items(invoice, delivery, item_code, cost_center, is
 		return
 
 	rate = delivery.customer_rate if is_sales else delivery.transporter_rate
+	item_rate = delivery.customer_amount if is_sales else delivery.transporter_amount
+	if delivery.rate_category != "10 Tonnes and Above":
+		item_rate = rate
 	item = invoice.append(
 		"items",
 		{
 			"item_code": item_code,
 			"qty": get_invoice_quantity(delivery),
-			"rate": rate,
+			"rate": item_rate,
 			"description": get_invoice_item_description(delivery, include_reference=include_reference),
 			"cost_center": cost_center,
 		},
@@ -596,7 +600,7 @@ def get_invoice_item_description(delivery, include_reference=False):
 	vehicle = delivery.vehicle_registration or "-"
 	if delivery.rate_category == "10 Tonnes and Above":
 		return prefix + _(
-			"Transport to {0}; band {1}; truck {2}; total weight {3} KG; vehicle {4}"
+			"Transport to {0}; band {1}; truck {2}; total weight {3} KG; rate charged per KG; vehicle {4}"
 		).format(
 			delivery.destination or "-",
 			delivery.distance_band or "-",
@@ -635,7 +639,7 @@ def get_above_10_trip_description(delivery, row, include_reference=False):
 	if include_reference and delivery.delivery_reference:
 		prefix += _("Ref {0}: ").format(delivery.delivery_reference)
 	vehicle = row.get("truck_no") or delivery.vehicle_registration or "-"
-	return prefix + _("Transport to {0}; band {1}; truck {2}; weight {3} KG; vehicle {4}").format(
+	return prefix + _("Transport to {0}; band {1}; truck {2}; weight {3} KG; rate charged per KG; vehicle {4}").format(
 		row.destination or "-",
 		row.distance_band or "-",
 		row.truck_class or "-",

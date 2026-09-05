@@ -157,7 +157,7 @@
                        "label":  "Above-10 Trip Rows"
                    },
                    {
-                       "description":  "Add one row per destination/trip for over-10 deliveries. Each row uses destination + weight to choose the flat rate column and amount.",
+                       "description":  "Add one row per destination/trip for above-10 deliveries. Each row uses destination + weight to choose the per-KG rate and calculate the amount.",
                        "depends_on":  "eval:doc.rate_category==\"10 Tonnes and Above\"",
                        "fieldname":  "above_10_trips",
                        "fieldtype":  "Table",
