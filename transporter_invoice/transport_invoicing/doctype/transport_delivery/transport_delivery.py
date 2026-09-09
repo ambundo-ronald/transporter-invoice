@@ -176,9 +176,10 @@ class TransportDelivery(Document):
 		self.customer_rate = rate.customer_rate
 		self.transporter_rate = rate.transporter_rate
 
-		quantity = flt(self.actual_weight_kg) if self.rate_category == "10 Tonnes and Above" else get_invoice_quantity(self)
-		self.customer_amount = quantity * flt(rate.customer_rate)
-		self.transporter_amount = quantity * flt(rate.transporter_rate)
+		customer_quantity = get_customer_invoice_quantity(self)
+		transporter_quantity = get_transporter_invoice_quantity(self)
+		self.customer_amount = customer_quantity * flt(rate.customer_rate)
+		self.transporter_amount = transporter_quantity * flt(rate.transporter_rate)
 		self.margin = flt(self.customer_amount) - flt(self.transporter_amount)
 
 	def _apply_above_10_trip_rates(self):
@@ -558,7 +559,7 @@ def append_transport_invoice_items(invoice, delivery, item_code, cost_center, is
 		"items",
 		{
 			"item_code": item_code,
-			"qty": get_invoice_quantity(delivery),
+			"qty": get_invoice_item_quantity(delivery, is_sales),
 			"rate": item_rate,
 			"description": get_invoice_item_description(delivery, include_reference=include_reference),
 			"cost_center": cost_center,
@@ -665,6 +666,24 @@ def get_under_10_trip_description(delivery, row, include_reference=False):
 		flt(row.weight_kg),
 		vehicle,
 	)
+
+
+def get_customer_invoice_quantity(delivery):
+	if delivery.rate_category == "10 Tonnes and Above":
+		return flt(delivery.actual_weight_kg)
+	if delivery.rate_category == "Under 10 Tonnes":
+		return 1
+	return get_invoice_quantity(delivery)
+
+
+def get_transporter_invoice_quantity(delivery):
+	if delivery.rate_category == "10 Tonnes and Above":
+		return flt(delivery.actual_weight_kg)
+	return get_invoice_quantity(delivery)
+
+
+def get_invoice_item_quantity(delivery, is_sales):
+	return get_customer_invoice_quantity(delivery) if is_sales else get_transporter_invoice_quantity(delivery)
 
 
 def get_invoice_quantity(delivery):

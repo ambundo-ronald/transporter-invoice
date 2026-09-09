@@ -5,6 +5,8 @@ from frappe.utils import add_days, nowdate
 from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import (
 	append_transport_invoice_items,
 	get_above_10_truck_class,
+	get_customer_invoice_quantity,
+	get_invoice_item_quantity,
 	get_invoice_item_description,
 	get_invoice_quantity,
 )
@@ -52,7 +54,7 @@ class TestTransportDelivery(FrappeTestCase):
 
 		self.assertEqual(delivery.actual_distance_km, 0)
 
-	def test_under_10_quantity_is_prorated_by_total_weight(self):
+	def test_under_10_transporter_quantity_is_prorated_by_total_weight(self):
 		delivery = frappe._dict(
 			rate_unit="Fixed Trip Amount",
 			rate_category="Under 10 Tonnes",
@@ -61,9 +63,23 @@ class TestTransportDelivery(FrappeTestCase):
 		)
 
 		self.assertEqual(get_invoice_quantity(delivery), 0.5)
+		self.assertEqual(get_invoice_item_quantity(delivery, is_sales=False), 0.5)
 
 		delivery.actual_weight_kg = 1500
 		self.assertEqual(get_invoice_quantity(delivery), 1)
+		self.assertEqual(get_invoice_item_quantity(delivery, is_sales=False), 1)
+
+	def test_under_10_customer_quantity_is_full_flat_rate(self):
+		delivery = frappe._dict(
+			rate_unit="Fixed Trip Amount",
+			rate_category="Under 10 Tonnes",
+			truck_class="1.5 MT",
+			actual_weight_kg=750,
+		)
+
+		self.assertEqual(get_customer_invoice_quantity(delivery), 1)
+		self.assertEqual(get_invoice_item_quantity(delivery, is_sales=True), 1)
+		self.assertEqual(get_invoice_item_quantity(delivery, is_sales=False), 0.5)
 
 	def test_under_10_allows_half_tonne_tolerance(self):
 		delivery = frappe.new_doc("Transport Delivery")
@@ -78,6 +94,33 @@ class TestTransportDelivery(FrappeTestCase):
 		delivery.actual_weight_kg = 2000.01
 		with self.assertRaises(frappe.ValidationError):
 			delivery._validate_delivery_details()
+
+	def test_under_10_single_customer_invoice_item_uses_full_rate(self):
+		delivery = frappe._dict(
+			name="TD-TEST-0003",
+			delivery_reference="LOAD-23",
+			rate_unit="Fixed Trip Amount",
+			rate_category="Under 10 Tonnes",
+			destination="Nairobi",
+			truck_class="1.5 MT",
+			vehicle_registration="KAA 123A",
+			actual_distance_km=0,
+			actual_weight_kg=750,
+			customer_rate=7410,
+			transporter_rate=6100,
+			customer_amount=7410,
+			transporter_amount=3050,
+		)
+		sales_invoice = _FakeInvoice()
+		purchase_invoice = _FakeInvoice()
+
+		append_transport_invoice_items(sales_invoice, delivery, "Transport services", "Main - TC", True)
+		append_transport_invoice_items(purchase_invoice, delivery, "Transport services", "Main - TC", False)
+
+		self.assertEqual(sales_invoice.items[0].qty, 1)
+		self.assertAlmostEqual(sales_invoice.items[0].rate, 7410)
+		self.assertEqual(purchase_invoice.items[0].qty, 0.5)
+		self.assertAlmostEqual(purchase_invoice.items[0].rate, 6100)
 
 	def test_under_10_trip_rows_are_copied_to_invoice_items(self):
 		delivery = frappe._dict(
