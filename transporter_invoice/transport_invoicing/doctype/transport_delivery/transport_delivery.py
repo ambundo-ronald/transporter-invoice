@@ -33,10 +33,42 @@ class TransportDelivery(Document):
 	def validate(self):
 		self.destination = (self.destination or "").strip()
 		self._validate_configured_company()
-		self._validate_delivery_details()
+		self._validate_request_details()
 		self._validate_parties()
-		self._apply_rate()
+		if self._trip_details_are_complete():
+			self._validate_delivery_details()
+			self._apply_rate()
 		self._validate_linked_invoices()
+
+	def before_submit(self):
+		self._validate_trip_evidence()
+		self._validate_delivery_details()
+		self._apply_rate(force=True)
+
+	def _validate_request_details(self):
+		if self.rate_category not in {"Under 10 Tonnes", "10 Tonnes and Above"}:
+			frappe.throw(_("Select a valid rate category."))
+
+		valid_classes = UNDER_10_TRUCK_CLASSES if self.rate_category == "Under 10 Tonnes" else ABOVE_10_TRUCK_CLASSES
+		if self.truck_class not in valid_classes:
+			frappe.throw(_("Select a valid requested truck class for {0}.").format(self.rate_category))
+
+	def _trip_details_are_complete(self):
+		rows = self.get("under_10_trips") if self.rate_category == "Under 10 Tonnes" else self.get("above_10_trips")
+		if not rows:
+			return False
+		return all((row.trip_reference or "").strip() and flt(row.weight_kg) > 0 for row in rows)
+
+	def _validate_trip_evidence(self):
+		rows = self.get("under_10_trips") if self.rate_category == "Under 10 Tonnes" else self.get("above_10_trips")
+		if not rows:
+			frappe.throw(_("Add at least one completed trip row before submitting for invoicing."))
+
+		for row in rows:
+			if not (row.trip_reference or "").strip():
+				frappe.throw(_("Row {0}: Trip Reference is required before submitting for invoicing.").format(row.idx))
+			if flt(row.weight_kg) <= 0:
+				frappe.throw(_("Row {0}: Weight (KG) must be greater than zero before submitting for invoicing.").format(row.idx))
 
 	def on_cancel(self):
 		submitted_invoices = []
@@ -66,8 +98,7 @@ class TransportDelivery(Document):
 			)
 
 	def _validate_delivery_details(self):
-		if self.rate_category not in {"Under 10 Tonnes", "10 Tonnes and Above"}:
-			frappe.throw(_("Select a valid rate category."))
+		self._validate_request_details()
 		if self.rate_category == "Under 10 Tonnes":
 			if self.truck_class not in UNDER_10_TRUCK_CLASSES:
 				frappe.throw(_("Under 10 Tonnes deliveries must use 1.5 MT, 3 MT, 5 MT, or 7 MT."))
@@ -123,7 +154,14 @@ class TransportDelivery(Document):
 				total_weight += flt(row.weight_kg)
 
 			self.actual_weight_kg = total_weight
-			self.truck_class = truck_classes.pop() if len(truck_classes) == 1 else "Mixed"
+			calculated_truck_class = truck_classes.pop() if len(truck_classes) == 1 else "Mixed"
+			if calculated_truck_class != self.truck_class:
+				frappe.throw(
+					_("The completed trip weight requires truck class {0}, but {1} was approved. Update the request and obtain approval again.").format(
+						frappe.bold(calculated_truck_class),
+						frappe.bold(self.truck_class),
+					)
+				)
 			if len(trip_rows) == 1:
 				self.destination = trip_rows[0].destination
 			return
@@ -132,7 +170,14 @@ class TransportDelivery(Document):
 			frappe.throw(_("Destination is required for 10 Tonnes and Above deliveries."))
 		if flt(self.actual_weight_kg) <= 0:
 			frappe.throw(_("Actual Weight (Kg) is required for 10 Tonnes and Above deliveries."))
-		self.truck_class = get_above_10_truck_class(self.actual_weight_kg)
+		calculated_truck_class = get_above_10_truck_class(self.actual_weight_kg)
+		if calculated_truck_class != self.truck_class:
+			frappe.throw(
+				_("The completed trip weight requires truck class {0}, but {1} was approved. Update the request and obtain approval again.").format(
+					frappe.bold(calculated_truck_class),
+					frappe.bold(self.truck_class),
+				)
+			)
 
 	def _validate_configured_company(self):
 		configured_company = frappe.db.get_value("Transport Invoice Settings", {}, "company")
@@ -151,8 +196,8 @@ class TransportDelivery(Document):
 		if frappe.db.get_value("Supplier", self.transporter, "disabled"):
 			frappe.throw(_("Transporter {0} is disabled.").format(frappe.bold(self.transporter)))
 
-	def _apply_rate(self):
-		if self.docstatus == 1:
+	def _apply_rate(self, force=False):
+		if self.docstatus == 1 and not force:
 			return
 
 		if self.rate_category == "10 Tonnes and Above" and self.get("above_10_trips"):

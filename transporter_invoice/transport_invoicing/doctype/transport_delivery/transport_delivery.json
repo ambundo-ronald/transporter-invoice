@@ -10,6 +10,7 @@
     "field_order":  [
                         "company",
                         "company_abbr",
+                        "workflow_state",
                         "delivery_date",
                         "customer",
                         "transporter",
@@ -59,6 +60,16 @@
                        "fieldtype":  "Data",
                        "hidden":  1,
                        "label":  "Company Abbreviation",
+                       "read_only":  1
+                   },
+                   {
+                       "allow_on_submit":  1,
+                       "fieldname":  "workflow_state",
+                       "fieldtype":  "Link",
+                       "in_list_view":  1,
+                       "label":  "Workflow State",
+                       "no_copy":  1,
+                       "options":  "Workflow State",
                        "read_only":  1
                    },
                    {
@@ -115,7 +126,7 @@
                        "label":  "Truck Class",
                        "options":  "1.5 MT\n3 MT\n5 MT\n7 MT\n10 MT\n14 MT\nTrailer\nMixed",
                        "reqd":  0,
-                       "description":  "For over-10 deliveries this is auto-selected from weight. Multiple trip rows may show Mixed."
+                       "description":  "Requested tonne class approved before dispatch. Completed above-10 weights must match this class."
                    },
                    {
                        "description":  "Optional audit distance. Over-10 rates are flat by selected location, not multiplied by KM.",

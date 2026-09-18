@@ -10,6 +10,18 @@ required_apps = ["frappe", "erpnext"]
 fixtures = [
 	"Custom Field",
 	{
+		"doctype": "Workflow State",
+		"filters": [["name", "in", ["Vehicle Request", "Pending Vehicle Approval", "Vehicle Approved", "Ready for Invoicing"]]],
+	},
+	{
+		"doctype": "Workflow Action Master",
+		"filters": [["name", "in", ["Submit for Vehicle Approval", "Approve Vehicle", "Reject Vehicle Request", "Submit for Invoicing"]]],
+	},
+	{
+		"doctype": "Workflow",
+		"filters": [["name", "=", "Transport Delivery Approval"]],
+	},
+	{
 		"doctype": "Print Format",
 		"filters": [["name", "in", ["Transport Sales Invoice", "Transport Purchase Invoice"]]],
 	},

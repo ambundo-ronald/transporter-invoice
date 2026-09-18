@@ -1,0 +1,6 @@
+[
+  {"doctype":"Workflow State","workflow_state_name":"Vehicle Request","icon":"edit","style":"Primary"},
+  {"doctype":"Workflow State","workflow_state_name":"Pending Vehicle Approval","icon":"review","style":"Warning"},
+  {"doctype":"Workflow State","workflow_state_name":"Vehicle Approved","icon":"check","style":"Success"},
+  {"doctype":"Workflow State","workflow_state_name":"Ready for Invoicing","icon":"check","style":"Success"}
+]

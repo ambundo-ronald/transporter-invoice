@@ -118,7 +118,7 @@ frappe.ui.form.on("Transport Delivery Trip", {
 
 function set_category_fields(frm) {
 	const is_under_10 = frm.doc.rate_category === "Under 10 Tonnes";
-	const options = is_under_10 ? UNDER_10_TRUCK_CLASSES : ABOVE_10_TRUCK_CLASSES;
+	const options = is_under_10 ? UNDER_10_TRUCK_CLASSES : ABOVE_10_TRUCK_CLASSES.filter((value) => value !== "Mixed");
 
 	frm.set_df_property("truck_class", "options", options.join("\n"));
 	if (frm.doc.truck_class && !options.includes(frm.doc.truck_class)) {
@@ -126,17 +126,14 @@ function set_category_fields(frm) {
 	}
 
 	frm.set_df_property("destination", "reqd", false);
-	frm.set_df_property("truck_class", "reqd", is_under_10);
+	frm.set_df_property("truck_class", "reqd", true);
 	frm.set_df_property("actual_distance_km", "reqd", false);
 	frm.set_df_property("actual_distance_km", "hidden", is_under_10);
 	frm.set_df_property("under_10_trips_section", "hidden", !is_under_10);
 	frm.set_df_property("under_10_trips", "hidden", !is_under_10);
 	frm.set_df_property("above_10_trips_section", "hidden", is_under_10);
 	frm.set_df_property("above_10_trips", "hidden", is_under_10);
-	frm.set_df_property("truck_class", "read_only", !is_under_10);
-	if (!is_under_10) {
-		update_above_10_truck_classes(frm);
-	}
+	frm.set_df_property("truck_class", "read_only", false);
 	frm.set_df_property(
 		"destination",
 		"description",
@@ -246,12 +243,8 @@ function update_above_10_truck_classes(frm, cdt, cdn) {
 		frm.set_value("actual_weight_kg", total_weight);
 	}
 
-	if (!truck_classes.size) {
-		frm.set_value("truck_class", null);
-		return;
-	}
-
-	frm.set_value("truck_class", truck_classes.size === 1 ? Array.from(truck_classes)[0] : "Mixed");
+	// Keep the approved request class unchanged. The server validates it against
+	// the completed trip weights before the delivery can be submitted.
 }
 
 function get_above_10_truck_class(weight_kg) {

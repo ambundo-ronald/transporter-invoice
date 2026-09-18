@@ -165,15 +165,41 @@ class TestTransportDelivery(FrappeTestCase):
 		self.assertAlmostEqual(invoice.items[1].rate, 5200)
 		self.assertAlmostEqual(sum(item.rate for item in invoice.items), delivery.customer_amount)
 
-	def test_above_10_delivery_uses_weight_for_truck_class_without_km(self):
+	def test_vehicle_request_can_be_validated_before_trip_evidence_exists(self):
+		delivery = frappe.new_doc("Transport Delivery")
+		delivery.rate_category = "10 Tonnes and Above"
+		delivery.truck_class = "14 MT"
+
+		delivery._validate_request_details()
+
+	def test_submission_requires_trip_rows_with_reference_and_weight(self):
+		delivery = frappe.new_doc("Transport Delivery")
+		delivery.rate_category = "Under 10 Tonnes"
+		delivery.truck_class = "1.5 MT"
+
+		with self.assertRaises(frappe.ValidationError):
+			delivery._validate_trip_evidence()
+
+		delivery.append("under_10_trips", {"weight_kg": 1500})
+		with self.assertRaises(frappe.ValidationError):
+			delivery._validate_trip_evidence()
+
+		delivery.under_10_trips[0].trip_reference = "TRIP-001"
+		delivery._validate_trip_evidence()
+
+	def test_above_10_completed_weight_must_match_approved_truck_class(self):
 		delivery = frappe.new_doc("Transport Delivery")
 		delivery.rate_category = "10 Tonnes and Above"
 		delivery.destination = "Thika Town"
+		delivery.truck_class = "14 MT"
 		delivery.actual_weight_kg = 12000
 
 		delivery._validate_delivery_details()
-
 		self.assertEqual(delivery.truck_class, "14 MT")
+
+		delivery.truck_class = "10 MT"
+		with self.assertRaises(frappe.ValidationError):
+			delivery._validate_delivery_details()
 
 	def test_above_10_truck_class_from_weight_with_tolerance(self):
 		for weight in (10000, 10200, 10450, 10600, 10750, 10999.99):
