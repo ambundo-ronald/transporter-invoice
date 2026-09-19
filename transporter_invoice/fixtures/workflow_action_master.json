@@ -1,6 +1,22 @@
 [
-  {"doctype":"Workflow Action Master","workflow_action_name":"Submit for Vehicle Approval"},
-  {"doctype":"Workflow Action Master","workflow_action_name":"Approve Vehicle"},
-  {"doctype":"Workflow Action Master","workflow_action_name":"Reject Vehicle Request"},
-  {"doctype":"Workflow Action Master","workflow_action_name":"Submit for Invoicing"}
+    {
+        "doctype":  "Workflow Action Master",
+        "workflow_action_name":  "Submit for Vehicle Approval",
+        "name":  "Submit for Vehicle Approval"
+    },
+    {
+        "doctype":  "Workflow Action Master",
+        "workflow_action_name":  "Approve Vehicle",
+        "name":  "Approve Vehicle"
+    },
+    {
+        "doctype":  "Workflow Action Master",
+        "workflow_action_name":  "Reject Vehicle Request",
+        "name":  "Reject Vehicle Request"
+    },
+    {
+        "doctype":  "Workflow Action Master",
+        "workflow_action_name":  "Submit for Invoicing",
+        "name":  "Submit for Invoicing"
+    }
 ]
