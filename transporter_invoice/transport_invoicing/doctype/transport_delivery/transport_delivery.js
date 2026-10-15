@@ -7,6 +7,11 @@ frappe.ui.form.on("Transport Delivery", {
 		frm._previous_delivery_date = frm.doc.delivery_date;
 		set_category_fields(frm);
 		load_route_location_options(frm);
+		if (frm.doc.docstatus === 0 && frm.doc.workflow_state === "Vehicle Approved") {
+			frm.add_custom_button(__("Save Trip Progress"), () => {
+				frm.save();
+			});
+		}
 
 		if (frm.doc.docstatus !== 1) {
 			return;

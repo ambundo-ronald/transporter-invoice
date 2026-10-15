@@ -7,6 +7,11 @@ app_license = "MIT"
 
 required_apps = ["frappe", "erpnext"]
 
+doctype_js = {
+	"Sales Invoice": "public/js/transport_invoice.js",
+	"Purchase Invoice": "public/js/transport_invoice.js",
+}
+
 fixtures = [
 	"Custom Field",
 	{
