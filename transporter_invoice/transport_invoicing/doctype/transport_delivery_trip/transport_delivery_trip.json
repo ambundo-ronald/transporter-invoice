@@ -8,6 +8,7 @@
     "engine":  "InnoDB",
     "field_order":  [
                         "trip_reference",
+                        "customer_name",
                         "truck_no",
                         "destination",
                         "weight_kg",
@@ -18,8 +19,15 @@
                        "fieldname":  "trip_reference",
                        "fieldtype":  "Data",
                        "in_list_view":  1,
-                       "label":  "Trip Reference",
+                       "label":  "Delivery Note",
                        "columns":  2
+                   },
+                   {
+                       "columns":  2,
+                       "fieldname":  "customer_name",
+                       "fieldtype":  "Data",
+                       "in_list_view":  1,
+                       "label":  "Customer Name"
                    },
                    {
                        "columns":  2,
@@ -33,7 +41,7 @@
                        "fieldtype":  "Autocomplete",
                        "in_list_view":  1,
                        "label":  "Destination / Stop",
-                       "columns":  3,
+                       "columns":  2,
                        "description":  "Start typing and select a location from submitted rate card Locations Covered."
                    },
                    {

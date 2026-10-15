@@ -10,6 +10,7 @@ from transporter_invoice.transport_invoicing.doctype.transport_delivery.transpor
 	get_invoice_item_description,
 	get_invoice_quantity,
 )
+from transporter_invoice.transport_invoicing.invoice_links import get_delivery_invoice_status
 
 
 class _FakeMeta:
@@ -35,6 +36,12 @@ class _FakeInvoice:
 
 
 class TestTransportDelivery(FrappeTestCase):
+	def test_invoice_links_determine_delivery_status(self):
+		self.assertEqual(get_delivery_invoice_status(), "Ready for Invoicing")
+		self.assertEqual(get_delivery_invoice_status("SINV-1"), "Customer Invoiced")
+		self.assertEqual(get_delivery_invoice_status(None, "PINV-1"), "Transporter Invoiced")
+		self.assertEqual(get_delivery_invoice_status("SINV-1", "PINV-1"), "Fully Invoiced")
+
 	def test_delivery_requires_valid_truck_class(self):
 		delivery = frappe.new_doc("Transport Delivery")
 		delivery.truck_class = "7 MT"
@@ -138,6 +145,7 @@ class TestTransportDelivery(FrappeTestCase):
 			under_10_trips=[
 				frappe._dict(
 					trip_reference="TRIP-1",
+					customer_name="Customer One",
 					destination="Thika Town",
 					truck_no="KBA 001A",
 					weight_kg=500,
@@ -157,6 +165,7 @@ class TestTransportDelivery(FrappeTestCase):
 		self.assertEqual(len(invoice.items), 2)
 		self.assertEqual(invoice.items[0].custom_transport_delivery, "TD-TEST-0002")
 		self.assertEqual(invoice.items[0].custom_trip_reference, "TRIP-1")
+		self.assertEqual(invoice.items[0].custom_delivery_customer_name, "Customer One")
 		self.assertEqual(invoice.items[0].custom_destination, "Thika Town")
 		self.assertEqual(invoice.items[0].custom_truck_no, "KBA 001A")
 		self.assertEqual(invoice.items[0].custom_truck_type, "1.5 MT")

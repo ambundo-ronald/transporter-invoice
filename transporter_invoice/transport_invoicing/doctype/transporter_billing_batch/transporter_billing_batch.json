@@ -1,0 +1,27 @@
+{
+ "doctype":"DocType", "name":"Transporter Billing Batch", "module":"Transport Invoicing",
+ "autoname":"format:TPB-{company_abbr}-{from_date}-{#####}", "naming_rule":"Expression", "engine":"InnoDB",
+ "is_submittable":1, "track_changes":1, "allow_rename":0, "title_field":"transporter",
+ "field_order":["company","company_abbr","transporter","date_section","from_date","to_date","posting_date","deliveries_section","deliveries","total_transporter_amount","invoice_section","purchase_invoice","notes","amended_from"],
+ "fields":[
+  {"fieldname":"company","fieldtype":"Link","label":"Company","options":"Company","reqd":1,"in_list_view":1},
+  {"fieldname":"company_abbr","fieldtype":"Data","label":"Company Abbreviation","fetch_from":"company.abbr","read_only":1,"hidden":1},
+  {"fieldname":"transporter","fieldtype":"Link","label":"Transporter / Supplier","options":"Supplier","reqd":1,"in_list_view":1},
+  {"fieldname":"date_section","fieldtype":"Section Break","label":"Payment Period"},
+  {"fieldname":"from_date","fieldtype":"Date","label":"From Date","reqd":1,"in_list_view":1},
+  {"fieldname":"to_date","fieldtype":"Date","label":"To Date","reqd":1,"in_list_view":1},
+  {"fieldname":"posting_date","fieldtype":"Date","label":"Purchase Invoice Posting Date","default":"Today","reqd":1},
+  {"fieldname":"deliveries_section","fieldtype":"Section Break","label":"Trips to Pay"},
+  {"fieldname":"deliveries","fieldtype":"Table","label":"Deliveries","options":"Transporter Billing Delivery","reqd":1},
+  {"fieldname":"total_transporter_amount","fieldtype":"Currency","label":"Total Amount to Pay","read_only":1,"in_list_view":1},
+  {"fieldname":"invoice_section","fieldtype":"Section Break","label":"Invoice"},
+  {"fieldname":"purchase_invoice","fieldtype":"Link","label":"Purchase Invoice","options":"Purchase Invoice","read_only":1,"no_copy":1},
+  {"fieldname":"notes","fieldtype":"Small Text","label":"Notes"},
+  {"fieldname":"amended_from","fieldtype":"Link","label":"Amended From","options":"Transporter Billing Batch","read_only":1,"no_copy":1,"print_hide":1}
+ ],
+ "permissions":[
+  {"role":"Accounts Manager","read":1,"write":1,"create":1,"delete":1,"submit":1,"cancel":1,"amend":1,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Accounts User","read":1,"write":1,"create":1,"submit":1,"print":1,"email":1,"report":1,"export":1,"share":1}
+ ],
+ "actions":[], "links":[], "states":[], "sort_field":"from_date", "sort_order":"DESC"
+}

@@ -41,6 +41,7 @@
                         "invoice_section",
                         "sales_invoice",
                         "billing_batch",
+                        "transporter_billing_batch",
                         "purchase_invoice",
                         "notes",
                         "amended_from"
@@ -285,6 +286,14 @@
                        "label":  "Billing Batch",
                        "no_copy":  1,
                        "options":  "Transport Billing Batch",
+                       "read_only":  1
+                   },
+                   {
+                       "fieldname":  "transporter_billing_batch",
+                       "fieldtype":  "Link",
+                       "label":  "Transporter Billing Batch",
+                       "no_copy":  1,
+                       "options":  "Transporter Billing Batch",
                        "read_only":  1
                    },
                    {

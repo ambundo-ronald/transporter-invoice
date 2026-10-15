@@ -3,7 +3,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, flt, getdate
 
-from transporter_invoice.transport_invoicing.invoice_links import set_if_has_field
+from transporter_invoice.transport_invoicing.invoice_links import set_if_has_field, sync_delivery_invoice_status
 from transporter_invoice.transport_invoicing.invoice_permissions import transport_invoice_permission_context
 
 
@@ -66,7 +66,7 @@ class TransportDelivery(Document):
 
 		for row in rows:
 			if not (row.trip_reference or "").strip():
-				frappe.throw(_("Row {0}: Trip Reference is required before submitting for invoicing.").format(row.idx))
+				frappe.throw(_("Row {0}: Delivery Note is required before submitting for invoicing.").format(row.idx))
 			if flt(row.weight_kg) <= 0:
 				frappe.throw(_("Row {0}: Weight (KG) must be greater than zero before submitting for invoicing.").format(row.idx))
 
@@ -475,6 +475,9 @@ def create_sales_invoice(delivery_name):
 
 @frappe.whitelist()
 def create_purchase_invoice(delivery_name):
+	transporter_batch = frappe.db.get_value("Transport Delivery", delivery_name, "transporter_billing_batch")
+	if transporter_batch:
+		frappe.throw(_("This delivery belongs to Transporter Billing Batch {0}. Create its Purchase Invoice from the batch.").format(frappe.bold(transporter_batch)))
 	return _create_invoice(delivery_name, "Purchase Invoice")
 
 
@@ -523,7 +526,8 @@ def _create_invoice(delivery_name, invoice_doctype):
 	link_field = "sales_invoice" if is_sales else "purchase_invoice"
 	existing_invoice = delivery.get(link_field)
 	if existing_invoice:
-		if frappe.db.exists(invoice_doctype, existing_invoice):
+		existing_docstatus = frappe.db.get_value(invoice_doctype, existing_invoice, "docstatus")
+		if existing_docstatus is not None and existing_docstatus != 2:
 			return existing_invoice
 		delivery.db_set(link_field, None, update_modified=False)
 
@@ -570,6 +574,7 @@ def _create_invoice(delivery_name, invoice_doctype):
 			invoice.submit()
 
 	delivery.db_set(link_field, invoice.name, update_modified=False)
+	sync_delivery_invoice_status(delivery.name)
 	return invoice.name
 
 

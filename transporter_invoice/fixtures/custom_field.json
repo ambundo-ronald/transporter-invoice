@@ -344,5 +344,19 @@
         "no_copy":  1,
         "read_only":  1,
         "precision":  "2"
+    },
+    {
+        "allow_on_submit":  1,
+        "doctype":  "Custom Field",
+        "dt":  "Purchase Invoice",
+        "fieldname":  "custom_transporter_billing_batch",
+        "fieldtype":  "Link",
+        "insert_after":  "supplier",
+        "label":  "Transporter Billing Batch",
+        "module":  "Transport Invoicing",
+        "name":  "Purchase Invoice-custom_transporter_billing_batch",
+        "no_copy":  1,
+        "options":  "Transporter Billing Batch",
+        "read_only":  1
     }
 ]

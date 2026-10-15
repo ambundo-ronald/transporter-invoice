@@ -3,7 +3,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, getdate
 
-from transporter_invoice.transport_invoicing.invoice_links import set_if_has_field
+from transporter_invoice.transport_invoicing.invoice_links import set_if_has_field, sync_delivery_invoice_status
 from transporter_invoice.transport_invoicing.invoice_permissions import transport_invoice_permission_context
 from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import append_transport_invoice_items
 
@@ -49,6 +49,7 @@ class TransportBillingBatch(Document):
 				updates,
 				update_modified=False,
 			)
+			sync_delivery_invoice_status(row.transport_delivery)
 
 	def _validate_configured_company(self):
 		configured_company = frappe.db.get_value("Transport Invoice Settings", {}, "company")
@@ -184,8 +185,12 @@ def create_sales_invoice(batch_name):
 	batch.check_permission("write")
 	if batch.docstatus != 1:
 		frappe.throw(_("Submit the billing batch before creating the Sales Invoice."))
-	if batch.sales_invoice and frappe.db.exists("Sales Invoice", batch.sales_invoice):
-		return batch.sales_invoice
+	if batch.sales_invoice:
+		existing_docstatus = frappe.db.get_value("Sales Invoice", batch.sales_invoice, "docstatus")
+		if existing_docstatus is not None and existing_docstatus != 2:
+			return batch.sales_invoice
+	if batch.sales_invoice:
+		batch.db_set("sales_invoice", None, update_modified=False)
 
 	settings = frappe.db.get_value(
 		"Transport Invoice Settings",
@@ -209,11 +214,14 @@ def create_sales_invoice(batch_name):
 	for row in batch.deliveries:
 		delivery = frappe.get_doc("Transport Delivery", row.transport_delivery)
 		if delivery.sales_invoice:
-			frappe.throw(
-				_("Delivery {0} is already linked to Sales Invoice {1}.").format(
-					delivery.name, delivery.sales_invoice
+			existing_docstatus = frappe.db.get_value("Sales Invoice", delivery.sales_invoice, "docstatus")
+			if existing_docstatus is not None and existing_docstatus != 2:
+				frappe.throw(
+					_("Delivery {0} is already linked to Sales Invoice {1}.").format(
+						delivery.name, delivery.sales_invoice
+					)
 				)
-			)
+			delivery.db_set("sales_invoice", None, update_modified=False)
 		append_transport_invoice_items(
 			invoice,
 			delivery,
@@ -238,6 +246,7 @@ def create_sales_invoice(batch_name):
 			{"sales_invoice": invoice.name, "billing_batch": batch.name},
 			update_modified=False,
 		)
+		sync_delivery_invoice_status(row.transport_delivery)
 
 	return invoice.name
 

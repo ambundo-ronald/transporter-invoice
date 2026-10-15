@@ -1,5 +1,5 @@
 frappe.listview_settings["Transport Delivery"] = {
-	add_fields: ["workflow_state", "sales_invoice", "purchase_invoice", "billing_batch"],
+	add_fields: ["workflow_state", "sales_invoice", "purchase_invoice", "billing_batch", "transporter_billing_batch"],
 	get_indicator(doc) {
 		if (doc.docstatus === 2) {
 			return [__("Cancelled"), "red", "docstatus,=,2"];

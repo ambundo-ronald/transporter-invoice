@@ -18,7 +18,7 @@ frappe.ui.form.on("Transport Delivery", {
 			}, __("Create"));
 		}
 
-		if (!frm.doc.purchase_invoice) {
+		if (!frm.doc.purchase_invoice && !frm.doc.transporter_billing_batch) {
 			frm.add_custom_button(__("Purchase Invoice"), () => {
 				call_invoice_method(frm, "create_purchase_invoice");
 			}, __("Create"));

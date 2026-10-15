@@ -11,7 +11,7 @@ fixtures = [
 	"Custom Field",
 	{
 		"doctype": "Workflow State",
-		"filters": [["name", "in", ["Vehicle Request", "Pending Vehicle Approval", "Vehicle Approved", "Ready for Invoicing"]]],
+		"filters": [["name", "in", ["Vehicle Request", "Pending Vehicle Approval", "Vehicle Approved", "Ready for Invoicing", "Customer Invoiced", "Transporter Invoiced", "Fully Invoiced"]]],
 	},
 	{
 		"doctype": "Workflow Action Master",
@@ -38,10 +38,14 @@ doc_events = {
 		"before_validate": "transporter_invoice.transport_invoicing.invoice_permissions.allow_generated_transport_invoice_submit",
 		"validate": "transporter_invoice.transport_invoicing.invoice_permissions.allow_generated_transport_invoice_submit",
 		"before_submit": "transporter_invoice.transport_invoicing.invoice_permissions.allow_generated_transport_invoice_submit",
+		"on_cancel": "transporter_invoice.transport_invoicing.invoice_links.unlink_transport_invoice",
+		"on_trash": "transporter_invoice.transport_invoicing.invoice_links.unlink_transport_invoice",
 	},
 	"Purchase Invoice": {
 		"before_validate": "transporter_invoice.transport_invoicing.invoice_permissions.allow_generated_transport_invoice_submit",
 		"validate": "transporter_invoice.transport_invoicing.invoice_permissions.allow_generated_transport_invoice_submit",
 		"before_submit": "transporter_invoice.transport_invoicing.invoice_permissions.allow_generated_transport_invoice_submit",
+		"on_cancel": "transporter_invoice.transport_invoicing.invoice_links.unlink_transport_invoice",
+		"on_trash": "transporter_invoice.transport_invoicing.invoice_links.unlink_transport_invoice",
 	},
 }

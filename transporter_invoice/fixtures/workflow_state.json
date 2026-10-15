@@ -26,5 +26,26 @@
         "icon":  "check",
         "style":  "Success",
         "name":  "Ready for Invoicing"
+    },
+    {
+        "doctype":  "Workflow State",
+        "workflow_state_name":  "Customer Invoiced",
+        "icon":  "check",
+        "style":  "Success",
+        "name":  "Customer Invoiced"
+    },
+    {
+        "doctype":  "Workflow State",
+        "workflow_state_name":  "Transporter Invoiced",
+        "icon":  "check",
+        "style":  "Success",
+        "name":  "Transporter Invoiced"
+    },
+    {
+        "doctype":  "Workflow State",
+        "workflow_state_name":  "Fully Invoiced",
+        "icon":  "check",
+        "style":  "Success",
+        "name":  "Fully Invoiced"
     }
 ]

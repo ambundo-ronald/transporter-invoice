@@ -6,6 +6,7 @@ import frappe
 TRANSPORT_LINK_FIELDS = (
 	"custom_transport_delivery",
 	"custom_transport_billing_batch",
+	"custom_transporter_billing_batch",
 )
 
 

@@ -11,7 +11,10 @@
       {"state": "Vehicle Request", "doc_status": "0", "allow_edit": "Accounts User"},
       {"state": "Pending Vehicle Approval", "doc_status": "0", "allow_edit": "Accounts Manager"},
       {"state": "Vehicle Approved", "doc_status": "0", "allow_edit": "Accounts User"},
-      {"state": "Ready for Invoicing", "doc_status": "1", "allow_edit": "Accounts Manager"}
+      {"state": "Ready for Invoicing", "doc_status": "1", "allow_edit": "Accounts Manager"},
+      {"state": "Customer Invoiced", "doc_status": "1", "allow_edit": "Accounts Manager"},
+      {"state": "Transporter Invoiced", "doc_status": "1", "allow_edit": "Accounts Manager"},
+      {"state": "Fully Invoiced", "doc_status": "1", "allow_edit": "Accounts Manager"}
     ],
     "transitions": [
       {"state": "Vehicle Request", "action": "Submit for Vehicle Approval", "next_state": "Pending Vehicle Approval", "allowed": "Accounts User", "allow_self_approval": 1},
