@@ -23,7 +23,7 @@ fixtures = [
 	},
 	{
 		"doctype": "Print Format",
-		"filters": [["name", "in", ["Transport Sales Invoice", "Transport Purchase Invoice"]]],
+		"filters": [["name", "in", ["Transport Sales Invoice", "Transport Purchase Invoice", "Transporter invoice 2"]]],
 	},
 ]
 
