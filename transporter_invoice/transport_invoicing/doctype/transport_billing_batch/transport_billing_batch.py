@@ -19,14 +19,34 @@ class TransportBillingBatch(Document):
 		if not self.deliveries:
 			frappe.throw(_("Add at least one delivery before submitting."))
 
-	def on_cancel(self):
+	def before_cancel(self):
 		if self.sales_invoice and frappe.db.get_value("Sales Invoice", self.sales_invoice, "docstatus") != 2:
 			frappe.throw(_("Cancel the linked Sales Invoice before cancelling this billing batch."))
+		self._unlink_deliveries()
+
+	def on_cancel(self):
+		# Keep cancellation cleanup idempotent for sites where link validation runs
+		# after on_cancel.
+		self._unlink_deliveries()
+
+	def _unlink_deliveries(self):
 		for row in self.deliveries:
+			delivery_links = frappe.db.get_value(
+				"Transport Delivery",
+				row.transport_delivery,
+				["billing_batch", "sales_invoice"],
+				as_dict=True,
+			)
+			if not delivery_links or delivery_links.billing_batch != self.name:
+				continue
+
+			updates = {"billing_batch": None}
+			if not self.sales_invoice or delivery_links.sales_invoice == self.sales_invoice:
+				updates["sales_invoice"] = None
 			frappe.db.set_value(
 				"Transport Delivery",
 				row.transport_delivery,
-				{"sales_invoice": None, "billing_batch": None},
+				updates,
 				update_modified=False,
 			)
 
