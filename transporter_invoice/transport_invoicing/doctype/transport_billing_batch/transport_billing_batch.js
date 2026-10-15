@@ -37,6 +37,25 @@ frappe.ui.form.on("Transport Billing Batch", {
 				});
 			}, __("Create"));
 		}
+
+		if (frm.doc.docstatus === 1) {
+			frm.add_custom_button(__("Cancel Billing Batch Only"), () => {
+				frappe.confirm(
+					__("Cancel this billing batch without cancelling its Transport Deliveries? The deliveries will become available for billing again."),
+					() => {
+						frappe.call({
+							method: "transporter_invoice.transport_invoicing.doctype.transport_billing_batch.transport_billing_batch.cancel_billing_batch_only",
+							args: { batch_name: frm.doc.name },
+							freeze: true,
+							freeze_message: __("Cancelling billing batch..."),
+							callback() {
+								frm.reload_doc();
+							},
+						});
+					}
+				);
+			}, __("Actions"));
+		}
 	},
 
 	deliveries_add: "calculate_total",

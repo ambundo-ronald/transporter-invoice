@@ -118,6 +118,21 @@ class TransportBillingBatch(Document):
 
 
 @frappe.whitelist()
+def cancel_billing_batch_only(batch_name):
+	frappe.db.sql(
+		"select name from `tabTransport Billing Batch` where name = %s for update",
+		batch_name,
+	)
+	batch = frappe.get_doc("Transport Billing Batch", batch_name)
+	batch.check_permission("cancel")
+	if batch.docstatus != 1:
+		frappe.throw(_("Only a submitted billing batch can be cancelled."))
+
+	batch.cancel()
+	return batch.name
+
+
+@frappe.whitelist()
 def get_unbilled_deliveries(company, customer, from_date, to_date):
 	if not all((company, customer, from_date, to_date)):
 		frappe.throw(_("Company, customer, From Date, and To Date are required."))
