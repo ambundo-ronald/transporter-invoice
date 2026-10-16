@@ -20,7 +20,7 @@ fixtures = [
 	},
 	{
 		"doctype": "Workflow Action Master",
-		"filters": [["name", "in", ["Submit for Vehicle Approval", "Approve Vehicle", "Reject Vehicle Request", "Submit for Invoicing"]]],
+		"filters": [["name", "in", ["Submit for Vehicle Approval", "Approve Vehicle", "Return to Amend", "Submit for Invoicing"]]],
 	},
 	{
 		"doctype": "Workflow",

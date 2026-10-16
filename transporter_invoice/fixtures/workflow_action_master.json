@@ -11,8 +11,8 @@
     },
     {
         "doctype":  "Workflow Action Master",
-        "workflow_action_name":  "Reject Vehicle Request",
-        "name":  "Reject Vehicle Request"
+        "workflow_action_name":  "Return to Amend",
+        "name":  "Return to Amend"
     },
     {
         "doctype":  "Workflow Action Master",

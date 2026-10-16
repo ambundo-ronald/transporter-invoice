@@ -19,7 +19,8 @@
     "transitions": [
       {"state": "Vehicle Request", "action": "Submit for Vehicle Approval", "next_state": "Pending Vehicle Approval", "allowed": "Accounts User", "allow_self_approval": 1},
       {"state": "Pending Vehicle Approval", "action": "Approve Vehicle", "next_state": "Vehicle Approved", "allowed": "Accounts Manager", "allow_self_approval": 0},
-      {"state": "Pending Vehicle Approval", "action": "Reject Vehicle Request", "next_state": "Vehicle Request", "allowed": "Accounts Manager", "allow_self_approval": 0},
+      {"state": "Pending Vehicle Approval", "action": "Return to Amend", "next_state": "Vehicle Request", "allowed": "Accounts Manager", "allow_self_approval": 0},
+      {"state": "Vehicle Approved", "action": "Return to Amend", "next_state": "Vehicle Request", "allowed": "Accounts Manager", "allow_self_approval": 0},
       {"state": "Vehicle Approved", "action": "Submit for Invoicing", "next_state": "Ready for Invoicing", "allowed": "Accounts User", "allow_self_approval": 1}
     ]
   }
