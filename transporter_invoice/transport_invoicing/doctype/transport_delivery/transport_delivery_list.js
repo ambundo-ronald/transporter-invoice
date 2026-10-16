@@ -5,23 +5,23 @@ frappe.listview_settings["Transport Delivery"] = {
 			return [__("Cancelled"), "red", "docstatus,=,2"];
 		}
 		if (doc.sales_invoice && doc.purchase_invoice) {
-			return [__("Fully Invoiced"), "green"];
+			return [__("Fully Invoiced"), "green", "workflow_state,=,Fully Invoiced"];
 		}
 		if (doc.sales_invoice) {
-			return [__("Customer Billed"), "blue"];
+			return [__("Customer Invoiced"), "cyan", "workflow_state,=,Customer Invoiced"];
 		}
 		if (doc.purchase_invoice) {
-			return [__("Transporter PI"), "purple"];
+			return [__("Transporter Invoiced"), "purple", "workflow_state,=,Transporter Invoiced"];
 		}
 		if (doc.docstatus === 1) {
-			return [__("Awaiting Billing"), "orange"];
+			return [__("Ready for Invoicing"), "yellow", "workflow_state,=,Ready for Invoicing"];
 		}
 		if (doc.workflow_state === "Pending Vehicle Approval") {
-			return [__("Pending Vehicle Approval"), "orange"];
+			return [__("Pending Vehicle Approval"), "orange", "workflow_state,=,Pending Vehicle Approval"];
 		}
 		if (doc.workflow_state === "Vehicle Approved") {
-			return [__("Vehicle Approved"), "blue"];
+			return [__("Vehicle Approved"), "blue", "workflow_state,=,Vehicle Approved"];
 		}
-		return [__(doc.workflow_state || "Vehicle Request"), "gray"];
+		return [__("Vehicle Request"), "gray", "workflow_state,=,Vehicle Request"];
 	},
 };
