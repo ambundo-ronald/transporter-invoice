@@ -113,6 +113,7 @@ class TransportDelivery(Document):
 	def _set_under_10_trip_weight(self):
 		total_weight = 0
 		for row in self.get("under_10_trips") or []:
+			row.location = (row.location or "").strip()
 			if flt(row.weight_kg) <= 0:
 				frappe.throw(_("Weight (KG) must be greater than zero for every under-10 trip row."))
 			total_weight += flt(row.weight_kg)
@@ -144,6 +145,7 @@ class TransportDelivery(Document):
 				row.trip_date = row.trip_date or self.delivery_date
 				row.truck_no = row.truck_no or self.transporter
 				row.destination = (row.destination or "").strip()
+				row.location = (row.location or "").strip()
 				row.customer_name = (row.customer_name or "").strip()
 				if not row.destination:
 					frappe.throw(_("Row {0}: Destination is required for above-10 trip rows.").format(row.idx))
@@ -770,6 +772,7 @@ def get_under_10_weight_factor(delivery):
 
 def set_invoice_item_transport_details(item, delivery, rate, row=None):
 	destination = (row.get("destination") if row else None) or delivery.destination
+	location = row.get("location") if row else None
 	truck_class = (row.get("truck_class") if row else None) or delivery.truck_class
 	weight_kg = (row.get("weight_kg") if row else None) or delivery.actual_weight_kg
 	trip_reference = (row.get("trip_reference") if row else None) or delivery.delivery_reference
@@ -780,6 +783,7 @@ def set_invoice_item_transport_details(item, delivery, rate, row=None):
 	set_if_has_field(item, "custom_trip_reference", trip_reference)
 	set_if_has_field(item, "custom_delivery_customer_name", delivery_customer_name)
 	set_if_has_field(item, "custom_destination", destination)
+	set_if_has_field(item, "custom_location", location)
 	set_if_has_field(item, "custom_truck_no", truck_no)
 	set_if_has_field(item, "custom_truck_type", truck_class)
 	set_if_has_field(item, "custom_net_weight_kg", flt(weight_kg))
@@ -789,3 +793,21 @@ def set_invoice_item_transport_details(item, delivery, rate, row=None):
 		"custom_km_amount",
 		flt(delivery.actual_distance_km) if delivery.rate_unit == "Per Km" else None,
 	)
+
+
+def get_delivery_location_summary(delivery_name):
+	locations = []
+	seen = set()
+	for child_doctype in ("Transport Delivery Trip", "Transport Delivery Above 10 Trip"):
+		for row in frappe.get_all(
+			child_doctype,
+			filters={"parent": delivery_name, "parenttype": "Transport Delivery"},
+			fields=["location"],
+			order_by="idx asc",
+		):
+			location = (row.location or "").strip()
+			key = location.casefold()
+			if location and key not in seen:
+				seen.add(key)
+				locations.append(location)
+	return ", ".join(locations)

@@ -12,6 +12,7 @@
                         "customer_name",
                         "truck_no",
                         "destination",
+                        "location",
                         "weight_kg",
                         "truck_class",
                         "distance_band",
@@ -39,14 +40,14 @@
                        "label":  "Trip Reference"
                    },
                    {
-                       "columns":  2,
+                       "columns":  1,
                        "fieldname":  "customer_name",
                        "fieldtype":  "Data",
                        "in_list_view":  1,
                        "label":  "Customer Name"
                    },
                    {
-                       "columns":  2,
+                       "columns":  1,
                        "fieldname":  "truck_no",
                        "fieldtype":  "Data",
                        "in_list_view":  1,
@@ -54,13 +55,21 @@
                        "description":  "Defaults from the selected Transporter/Supplier. You can edit it per row."
                    },
                    {
-                       "columns":  3,
+                       "columns":  2,
                        "fieldname":  "destination",
                        "fieldtype":  "Autocomplete",
                        "in_list_view":  1,
                        "label":  "Destination",
                        "reqd":  1,
                        "description":  "Start typing and select a location from submitted rate card Locations Covered."
+                   },
+                   {
+                       "columns":  2,
+                       "fieldname":  "location",
+                       "fieldtype":  "Data",
+                       "in_list_view":  1,
+                       "label":  "Location",
+                       "description":  "Enter the specific delivery location or address. This does not affect the rate calculation."
                    },
                    {
                        "columns":  2,

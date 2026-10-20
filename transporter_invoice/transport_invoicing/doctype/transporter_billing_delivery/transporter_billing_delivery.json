@@ -1,12 +1,13 @@
 {
  "doctype": "DocType", "name": "Transporter Billing Delivery", "module": "Transport Invoicing",
  "istable": 1, "editable_grid": 1, "engine": "InnoDB",
- "field_order": ["transport_delivery", "delivery_date", "delivery_reference", "destination", "truck_class", "actual_weight_kg", "transporter_rate", "transporter_amount"],
+ "field_order": ["transport_delivery", "delivery_date", "delivery_reference", "destination", "location", "truck_class", "actual_weight_kg", "transporter_rate", "transporter_amount"],
  "fields": [
   {"fieldname":"transport_delivery","fieldtype":"Link","label":"Transport Delivery","options":"Transport Delivery","reqd":1,"in_list_view":1,"columns":2},
   {"fieldname":"delivery_date","fieldtype":"Date","label":"Delivery Date","read_only":1,"in_list_view":1,"columns":2},
-  {"fieldname":"delivery_reference","fieldtype":"Data","label":"Delivery Note","read_only":1,"in_list_view":1,"columns":2},
-  {"fieldname":"destination","fieldtype":"Data","label":"Destination","read_only":1,"in_list_view":1,"columns":2},
+  {"fieldname":"delivery_reference","fieldtype":"Data","label":"Delivery Note","read_only":1,"in_list_view":1,"columns":1},
+  {"fieldname":"destination","fieldtype":"Data","label":"Destination","read_only":1,"in_list_view":1,"columns":1},
+  {"fieldname":"location","fieldtype":"Data","label":"Locations","read_only":1,"in_list_view":1,"columns":2},
   {"fieldname":"truck_class","fieldtype":"Data","label":"Truck Class","read_only":1,"in_list_view":1,"columns":1},
   {"fieldname":"actual_weight_kg","fieldtype":"Float","label":"Weight (KG)","precision":"2","read_only":1,"in_list_view":1,"columns":1},
   {"fieldname":"transporter_rate","fieldtype":"Currency","label":"Transporter Rate","precision":"4","read_only":1},

@@ -5,7 +5,10 @@ from frappe.utils import flt, getdate
 
 from transporter_invoice.transport_invoicing.invoice_links import set_if_has_field, sync_delivery_invoice_status
 from transporter_invoice.transport_invoicing.invoice_permissions import transport_invoice_permission_context
-from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import append_transport_invoice_items
+from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import (
+	append_transport_invoice_items,
+	get_delivery_location_summary,
+)
 
 
 class TransportBillingBatch(Document):
@@ -108,6 +111,7 @@ class TransportBillingBatch(Document):
 			row.delivery_date = delivery.delivery_date
 			row.delivery_reference = delivery.delivery_reference
 			row.destination = delivery.destination
+			row.location = get_delivery_location_summary(row.transport_delivery)
 			row.truck_class = delivery.truck_class
 			row.actual_distance_km = delivery.actual_distance_km
 			row.actual_weight_kg = delivery.actual_weight_kg
@@ -172,6 +176,8 @@ def get_unbilled_deliveries(company, customer, from_date, to_date):
 		],
 		order_by="delivery_date asc, name asc",
 	)
+	for delivery in deliveries:
+		delivery.location = get_delivery_location_summary(delivery.transport_delivery)
 	return deliveries
 
 

@@ -146,6 +146,7 @@ class TestTransportDelivery(FrappeTestCase):
 				frappe._dict(
 					trip_reference="TRIP-1",
 					customer_name="Customer One",
+					location="Warehouse A",
 					destination="Thika Town",
 					truck_no="KBA 001A",
 					weight_kg=500,
@@ -167,6 +168,7 @@ class TestTransportDelivery(FrappeTestCase):
 		self.assertEqual(invoice.items[0].custom_trip_reference, "TRIP-1")
 		self.assertEqual(invoice.items[0].custom_delivery_customer_name, "Customer One")
 		self.assertEqual(invoice.items[0].custom_destination, "Thika Town")
+		self.assertEqual(invoice.items[0].custom_location, "Warehouse A")
 		self.assertEqual(invoice.items[0].custom_truck_no, "KBA 001A")
 		self.assertEqual(invoice.items[0].custom_truck_type, "1.5 MT")
 		self.assertEqual(invoice.items[0].custom_net_weight_kg, 500)
@@ -239,6 +241,7 @@ class TestTransportDelivery(FrappeTestCase):
 					trip_reference="TRIP-10",
 					customer_name="Bidco",
 					destination="Meru",
+					location="Meru Depot",
 					truck_no="KBA 010A",
 					weight_kg=9800,
 					truck_class="10 MT",
@@ -260,6 +263,7 @@ class TestTransportDelivery(FrappeTestCase):
 		self.assertAlmostEqual(invoice.items[0].custom_net_weight_kg, 9800)
 		self.assertEqual(invoice.items[0].custom_truck_type, "10 MT")
 		self.assertEqual(invoice.items[0].custom_delivery_customer_name, "Bidco")
+		self.assertEqual(invoice.items[0].custom_location, "Meru Depot")
 
 	def test_above_10_fixed_quantity_is_one(self):
 		delivery = frappe._dict(

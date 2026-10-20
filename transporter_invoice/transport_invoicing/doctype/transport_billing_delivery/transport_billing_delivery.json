@@ -11,6 +11,7 @@
                         "delivery_date",
                         "delivery_reference",
                         "destination",
+                        "location",
                         "truck_class",
                         "actual_distance_km",
                         "actual_weight_kg",
@@ -36,7 +37,7 @@
                        "read_only":  1
                    },
                    {
-                       "columns":  2,
+                       "columns":  1,
                        "fieldname":  "delivery_reference",
                        "fieldtype":  "Data",
                        "in_list_view":  1,
@@ -44,11 +45,19 @@
                        "read_only":  1
                    },
                    {
-                       "columns":  2,
+                       "columns":  1,
                        "fieldname":  "destination",
                        "fieldtype":  "Data",
                        "in_list_view":  1,
                        "label":  "Destination",
+                       "read_only":  1
+                   },
+                   {
+                       "columns":  2,
+                       "fieldname":  "location",
+                       "fieldtype":  "Data",
+                       "in_list_view":  1,
+                       "label":  "Locations",
                        "read_only":  1
                    },
                    {

@@ -11,6 +11,7 @@
                         "customer_name",
                         "truck_no",
                         "destination",
+                        "location",
                         "weight_kg",
                         "notes"
                     ],
@@ -43,6 +44,14 @@
                        "label":  "Destination / Stop",
                        "columns":  2,
                        "description":  "Start typing and select a location from submitted rate card Locations Covered."
+                   },
+                   {
+                       "fieldname":  "location",
+                       "fieldtype":  "Data",
+                       "in_list_view":  1,
+                       "label":  "Location",
+                       "columns":  2,
+                       "description":  "Enter the specific delivery location or address. This does not affect the rate calculation."
                    },
                    {
                        "fieldname":  "weight_kg",

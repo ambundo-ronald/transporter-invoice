@@ -3,7 +3,10 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, getdate
 
-from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import append_transport_invoice_items
+from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import (
+	append_transport_invoice_items,
+	get_delivery_location_summary,
+)
 from transporter_invoice.transport_invoicing.invoice_links import set_if_has_field, sync_delivery_invoice_status
 from transporter_invoice.transport_invoicing.invoice_permissions import transport_invoice_permission_context
 
@@ -80,6 +83,7 @@ class TransporterBillingBatch(Document):
 				frappe.throw(_("Delivery {0} is already linked to Transporter Billing Batch {1}.").format(row.transport_delivery, delivery.transporter_billing_batch))
 			for fieldname in ("delivery_date", "delivery_reference", "destination", "truck_class", "actual_weight_kg", "transporter_rate", "transporter_amount"):
 				row.set(fieldname, delivery.get(fieldname))
+			row.location = get_delivery_location_summary(row.transport_delivery)
 
 
 @frappe.whitelist()
@@ -102,8 +106,11 @@ def get_unpaid_deliveries(company, transporter, from_date, to_date):
 	configured_company = frappe.db.get_value("Transport Invoice Settings", {}, "company")
 	if company != configured_company:
 		frappe.throw(_("Transport invoicing is restricted to company {0}.").format(frappe.bold(configured_company or "")))
-	return frappe.get_list("Transport Delivery", filters={"company": company, "transporter": transporter, "docstatus": 1, "purchase_invoice": ["is", "not set"], "transporter_billing_batch": ["is", "not set"], "delivery_date": ["between", [getdate(from_date), getdate(to_date)]]},
+	deliveries = frappe.get_list("Transport Delivery", filters={"company": company, "transporter": transporter, "docstatus": 1, "purchase_invoice": ["is", "not set"], "transporter_billing_batch": ["is", "not set"], "delivery_date": ["between", [getdate(from_date), getdate(to_date)]]},
 		fields=["name as transport_delivery", "delivery_date", "delivery_reference", "destination", "truck_class", "actual_weight_kg", "transporter_rate", "transporter_amount"], order_by="delivery_date asc, name asc")
+	for delivery in deliveries:
+		delivery.location = get_delivery_location_summary(delivery.transport_delivery)
+	return deliveries
 
 
 @frappe.whitelist()
