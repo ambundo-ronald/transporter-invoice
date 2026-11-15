@@ -100,6 +100,35 @@ JUNE_2026_ABOVE_10_RATES = [
 	(5.21, 5.12, 4.85, 4.21, 4.12, 3.85),
 ]
 
+BIDCORO_CUSTOMER = "Bidcoro"
+BIDCORO_EFFECTIVE_FROM = "2026-06-15"
+
+# Bidcoro has its own customer and transporter rates (15 June 2026 sheet).
+BIDCORO_UNDER_10_RATES = [
+	{"truck_capacity": "1.5 MT", "under_10_customer_rate": 8102.10, "under_10_transporter_rate": 6100},
+	{"truck_capacity": "3 MT", "under_10_customer_rate": 9633.25, "under_10_transporter_rate": 6800},
+	{"truck_capacity": "5 MT", "under_10_customer_rate": 12588.20, "under_10_transporter_rate": 8800},
+	{"truck_capacity": "7 MT", "under_10_customer_rate": 13899.00, "under_10_transporter_rate": 10000},
+]
+
+# One row per ABOVE_10_LOCATIONS band, per KG:
+# customer (10-13t, 13-19t, trailer 28t), transporter (10-13t, 14-19t, 28t).
+BIDCORO_ABOVE_10_RATES = [
+	(1.05, 1.04, 0.94, 0.84, 0.83, 0.73),
+	(1.23, 1.21, 1.13, 0.98, 0.96, 0.88),
+	(1.82, 1.79, 1.66, 1.20, 1.17, 1.04),
+	(2.23, 2.17, 1.95, 1.56, 1.50, 1.28),
+	(2.77, 2.69, 2.49, 2.09, 2.01, 1.81),
+	(2.99, 2.92, 2.67, 2.27, 2.20, 1.95),
+	(3.40, 3.35, 3.02, 2.48, 2.43, 2.10),
+	(3.86, 3.80, 3.61, 2.91, 2.85, 2.66),
+	(4.63, 4.57, 4.50, 3.38, 3.32, 3.25),
+	(4.53, 4.47, 4.21, 3.33, 3.27, 3.01),
+	(4.92, 4.79, 4.50, 3.77, 3.64, 3.35),
+	(4.57, 4.47, 4.21, 3.57, 3.47, 3.21),
+	(5.21, 5.12, 4.85, 4.21, 4.12, 3.85),
+]
+
 JULY_2026_ABOVE_10_RATES = [
 	(0.99, 0.98, 0.89, 0.71, 0.75, 0.61),
 	(1.16, 1.13, 1.06, 0.82, 0.86, 0.72),
@@ -143,6 +172,93 @@ def create_july_2026_above_10_rate_card(company=None):
 		JULY_2026_EFFECTIVE_FROM,
 		_build_above_10_rates(JULY_2026_ABOVE_10_RATES),
 		"Generic draft above-10-tonne July 2026 rates seeded by Transporter Invoice. Customer rates and transporter rates are both from the July tables. Review, edit, then submit when ready.",
+	)
+
+
+def create_bidcoro_rate_cards(customer=None):
+	"""Create draft Bidcoro rate cards with Bidcoro's own customer and transporter rates.
+
+	Run again any time with:
+	bench --site <site> execute transporter_invoice.transport_invoicing.seed_data.create_bidcoro_rate_cards
+	"""
+	company = frappe.db.get_value("Transport Invoice Settings", {}, "company")
+	if not company:
+		return []
+
+	customer = _find_customer(customer or BIDCORO_CUSTOMER)
+	if not customer:
+		frappe.log_error(
+			title="Bidcoro rate cards not created",
+			message="No Customer named Bidcoro was found. Create the customer, then run create_bidcoro_rate_cards.",
+		)
+		return []
+
+	created = []
+	if not _customer_card_exists(company, customer, "Under 10 Tonnes"):
+		card = frappe.new_doc("Transport Rate Card")
+		card.company = company
+		card.customer = customer
+		card.rate_category = "Under 10 Tonnes"
+		card.rate_unit = "Fixed Trip Amount"
+		card.effective_from = BIDCORO_EFFECTIVE_FROM
+		card.notes = "Draft Bidcoro under-10-tonne customer and transporter rates (15 June 2026 sheet). Review, then submit when ready."
+		for row in BIDCORO_UNDER_10_RATES:
+			card.append("rates", row)
+		card.insert(ignore_permissions=True)
+		created.append(card.name)
+
+	if not _customer_card_exists(company, customer, "10 Tonnes and Above"):
+		if len(BIDCORO_ABOVE_10_RATES) != len(ABOVE_10_LOCATIONS):
+			raise ValueError("Bidcoro above-10 rate rows must match the location band rows.")
+		card = frappe.new_doc("Transport Rate Card")
+		card.company = company
+		card.customer = customer
+		card.rate_category = "10 Tonnes and Above"
+		card.rate_unit = "Per KG"
+		card.effective_from = BIDCORO_EFFECTIVE_FROM
+		card.notes = "Draft Bidcoro above-10-tonne customer and transporter rates (15 June 2026 sheet). Review, then submit when ready."
+		for (distance_band, locations), (c10, c14, ctrailer, t10, t14, t28) in zip(ABOVE_10_LOCATIONS, BIDCORO_ABOVE_10_RATES):
+			from_km, to_km = _distance_range(distance_band)
+			for location in locations:
+				card.append(
+					"rates",
+					{
+						"distance_band": distance_band,
+						"from_km": from_km,
+						"to_km": to_km,
+						"location": location,
+						"customer_10mt_rate": c10,
+						"customer_14mt_rate": c14,
+						"customer_trailer_rate": ctrailer,
+						"transporter_10_13mt_rate": t10,
+						"transporter_14_17mt_rate": t14,
+						"transporter_28mt_rate": t28,
+					},
+				)
+		card.insert(ignore_permissions=True)
+		created.append(card.name)
+
+	return created
+
+
+def _find_customer(customer):
+	if frappe.db.exists("Customer", customer):
+		return customer
+	matches = frappe.get_all("Customer", filters={"customer_name": customer}, pluck="name", limit=2)
+	return matches[0] if len(matches) == 1 else None
+
+
+def _customer_card_exists(company, customer, rate_category):
+	return bool(
+		frappe.db.exists(
+			"Transport Rate Card",
+			{
+				"company": company,
+				"customer": customer,
+				"rate_category": rate_category,
+				"docstatus": ["<", 2],
+			},
+		)
 	)
 
 

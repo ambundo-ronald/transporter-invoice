@@ -1,8 +1,12 @@
+from unittest.mock import patch
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, nowdate
 
 from transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery import (
+	_get_above_10_rate,
+	_get_under_10_rate,
 	append_transport_invoice_items,
 	get_above_10_truck_class,
 	get_customer_invoice_quantity,
@@ -11,6 +15,9 @@ from transporter_invoice.transport_invoicing.doctype.transport_delivery.transpor
 	get_invoice_quantity,
 )
 from transporter_invoice.transport_invoicing.invoice_links import get_delivery_invoice_status
+
+
+DELIVERY_MODULE = "transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery"
 
 
 class _FakeMeta:
@@ -338,5 +345,56 @@ class TestTransportDelivery(FrappeTestCase):
 			},
 		)
 
+		with self.assertRaises(frappe.ValidationError):
+			card._validate_rates()
+
+	def test_customer_card_without_transporter_rate_uses_shared_card(self):
+		cards = [
+			frappe._dict(name="CARD-BIDCORO", customer="Bidcoro", transporter=None, effective_from="2026-11-01"),
+			frappe._dict(name="CARD-GENERAL", customer=None, transporter=None, effective_from="2026-07-01"),
+		]
+		rows = {
+			"CARD-BIDCORO": frappe._dict(name="ROW-B", distance_band="0-25 KMs", location="Thika Town", customer_10mt_rate=1.2, transporter_10_13mt_rate=0),
+			"CARD-GENERAL": frappe._dict(name="ROW-G", distance_band="0-25 KMs", location="Thika Town", customer_10mt_rate=1.05, transporter_10_13mt_rate=0.84),
+		}
+
+		with patch(f"{DELIVERY_MODULE}._get_above_10_row", side_effect=lambda card_name, *args: rows.get(card_name)):
+			rate = _get_above_10_rate(cards, "Thika Town", "10 MT", "2026-11-15", "Transporter A")
+			general_rate = _get_above_10_rate(cards[1:], "Thika Town", "10 MT", "2026-11-15", "Transporter A")
+
+		self.assertEqual(rate.rate_card, "CARD-BIDCORO")
+		self.assertEqual(rate.customer_rate, 1.2)
+		self.assertEqual(rate.transporter_rate, 0.84)
+		self.assertEqual(general_rate.customer_rate, 1.05)
+		self.assertEqual(general_rate.transporter_rate, 0.84)
+
+	def test_under_10_customer_card_without_transporter_rate_uses_shared_card(self):
+		cards = [
+			frappe._dict(name="CARD-BIDCORO", customer="Bidcoro", transporter=None, effective_from="2026-11-01"),
+			frappe._dict(name="CARD-GENERAL", customer=None, transporter=None, effective_from="2026-06-01"),
+		]
+		rows = {
+			"CARD-BIDCORO": frappe._dict(name="ROW-B", distance_band=None, under_10_customer_rate=9000, under_10_transporter_rate=0),
+			"CARD-GENERAL": frappe._dict(name="ROW-G", distance_band=None, under_10_customer_rate=8200, under_10_transporter_rate=6800),
+		}
+
+		with patch(f"{DELIVERY_MODULE}._get_under_10_row", side_effect=lambda card_name, truck_class: rows.get(card_name)):
+			rate = _get_under_10_rate(cards, "3 MT", "Transporter A")
+
+		self.assertEqual(rate.rate_card, "CARD-BIDCORO")
+		self.assertEqual(rate.customer_rate, 9000)
+		self.assertEqual(rate.transporter_rate, 6800)
+
+	def test_customer_rate_card_allows_blank_transporter_rates(self):
+		card = frappe.new_doc("Transport Rate Card")
+		card.company = "_Test Company"
+		card.customer = "_Test Customer"
+		card.rate_category = "10 Tonnes and Above"
+		card.effective_from = add_days(nowdate(), 1000)
+		card.append("rates", {"distance_band": "0-25 KMs", "location": "Thika Town", "customer_10mt_rate": 1.2})
+
+		card._validate_rates()
+
+		card.customer = None
 		with self.assertRaises(frappe.ValidationError):
 			card._validate_rates()

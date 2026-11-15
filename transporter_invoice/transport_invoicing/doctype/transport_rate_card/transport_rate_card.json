@@ -40,7 +40,7 @@
                        "read_only":  1
                    },
                    {
-                       "description":  "Optional. Leave blank to use this matrix for any customer; set a customer only for a customer-specific override.",
+                       "description":  "Optional. Leave blank to use this matrix for any customer; set a customer only for a customer-specific override. On a customer-specific card the transporter rates may be left blank; they are then taken from the general rate card.",
                        "fieldname":  "customer",
                        "fieldtype":  "Link",
                        "in_list_view":  1,
@@ -126,7 +126,7 @@
     "links":  [
 
               ],
-    "modified":  "2026-06-09 00:00:00.000000",
+    "modified":  "2026-11-15 10:00:00.000000",
     "modified_by":  "Administrator",
     "module":  "Transport Invoicing",
     "name":  "Transport Rate Card",
