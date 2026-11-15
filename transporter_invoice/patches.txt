@@ -4,3 +4,4 @@
 transporter_invoice.patches.v1_0.create_default_rate_cards
 transporter_invoice.patches.v1_0.create_july_2026_above_10_rate_card
 transporter_invoice.patches.v1_0.sync_transport_delivery_invoice_statuses
+transporter_invoice.patches.v1_0.create_bidcoro_rate_cards
