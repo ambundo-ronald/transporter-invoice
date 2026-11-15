@@ -62,9 +62,11 @@ class TransportRateCard(Document):
 
 			customer_rate = flt(row.under_10_customer_rate)
 			transporter_rate = flt(row.under_10_transporter_rate)
-			if customer_rate <= 0 or transporter_rate <= 0:
+			if customer_rate <= 0:
+				frappe.throw(_("Row {0}: under-10 customer rate is required.").format(row.idx))
+			if transporter_rate <= 0 and not self.customer:
 				frappe.throw(_("Row {0}: under-10 customer and transporter rates are required.").format(row.idx))
-			if customer_rate < transporter_rate:
+			if transporter_rate and customer_rate < transporter_rate:
 				frappe.throw(_("Row {0}: customer rate cannot be below transporter rate.").format(row.idx))
 
 	def _validate_above_10_rates(self):
@@ -102,13 +104,16 @@ class TransportRateCard(Document):
 			):
 				customer_rate = flt(row.get(customer_field))
 				transporter_rate = flt(row.get(transporter_field))
-				if bool(customer_rate) != bool(transporter_rate):
+				# Customer-specific cards may leave transporter rates blank; the delivery
+				# then takes the transporter rate from the shared rate card.
+				transporter_rate_is_optional = bool(self.customer) and customer_rate and not transporter_rate
+				if bool(customer_rate) != bool(transporter_rate) and not transporter_rate_is_optional:
 					frappe.throw(
 						_("Row {0}: customer and transporter rates must both be entered for {1}.").format(
 							row.idx, row.meta.get_label(customer_field)
 						)
 					)
-				if customer_rate and customer_rate < transporter_rate:
+				if customer_rate and transporter_rate and customer_rate < transporter_rate:
 					frappe.throw(
 						_("Row {0}: customer rate cannot be below transporter rate for {1}.").format(
 							row.idx, row.meta.get_label(customer_field)

@@ -337,77 +337,135 @@ def get_applicable_rate(company, customer, transporter, delivery_date, destinati
 	)
 
 	if rate_category == "Under 10 Tonnes":
-		return _get_under_10_rate(cards, truck_class)
+		return _get_under_10_rate(cards, truck_class, transporter)
 
-	return _get_above_10_rate(cards, destination, truck_class, delivery_date)
+	return _get_above_10_rate(cards, destination, truck_class, delivery_date, transporter)
 
 
-def _get_under_10_rate(cards, truck_class):
+def _get_shared_transporter_rate(cards, transporter, skip_card, get_card_transporter_rate):
+	"""Find the transporter rate on another applicable card.
+
+	Customer-specific cards may hold customer rates only. The transporter rate then
+	comes from the remaining applicable cards, transporter-specific cards first.
+	"""
+	fallback_cards = sorted(
+		(card for card in cards if card.name != skip_card),
+		key=lambda card: (
+			1 if transporter and card.transporter == transporter else 0,
+			getdate(card.effective_from),
+		),
+		reverse=True,
+	)
+	for card in fallback_cards:
+		transporter_rate = flt(get_card_transporter_rate(card))
+		if transporter_rate:
+			return transporter_rate
+	return 0
+
+
+def _get_under_10_row(card_name, truck_class):
+	return frappe.db.get_value(
+		"Transport Rate",
+		{
+			"parent": card_name,
+			"parenttype": "Transport Rate Card",
+			"truck_capacity": truck_class,
+		},
+		[
+			"name",
+			"distance_band",
+			"location",
+			"under_10_customer_rate",
+			"under_10_transporter_rate",
+		],
+		as_dict=True,
+	)
+
+
+def _get_under_10_rate(cards, truck_class, transporter=None):
 	for card in cards:
-		rate = frappe.db.get_value(
-			"Transport Rate",
-			{
-				"parent": card.name,
-				"parenttype": "Transport Rate Card",
-				"truck_capacity": truck_class,
-			},
-			[
-				"name",
-				"distance_band",
-				"location",
-				"under_10_customer_rate",
-				"under_10_transporter_rate",
-			],
-			as_dict=True,
-		)
-		if rate:
-			customer_rate = flt(rate.under_10_customer_rate)
-			transporter_rate = flt(rate.under_10_transporter_rate)
-			return frappe._dict(
-				rate_card=card.name,
-				rate_row=rate.name,
-				distance_band=rate.distance_band,
-				rate_unit="Fixed Trip Amount",
-				customer_rate=customer_rate,
-				transporter_rate=transporter_rate,
+		rate = _get_under_10_row(card.name, truck_class)
+		if not rate:
+			continue
+
+		customer_rate = flt(rate.under_10_customer_rate)
+		transporter_rate = flt(rate.under_10_transporter_rate)
+		if customer_rate and not transporter_rate:
+			transporter_rate = _get_shared_transporter_rate(
+				cards,
+				transporter,
+				card.name,
+				lambda other: (_get_under_10_row(other.name, truck_class) or {}).get("under_10_transporter_rate"),
 			)
+			if not transporter_rate:
+				frappe.throw(
+					_("No transporter rate was found for {0}. Rate card {1} has no transporter rate and no shared rate card covers it.").format(
+						frappe.bold(truck_class),
+						frappe.bold(card.name),
+					)
+				)
+		return frappe._dict(
+			rate_card=card.name,
+			rate_row=rate.name,
+			distance_band=rate.distance_band,
+			rate_unit="Fixed Trip Amount",
+			customer_rate=customer_rate,
+			transporter_rate=transporter_rate,
+		)
 
 	frappe.throw(
 		_("No submitted under-10 rate was found for {0}.").format(frappe.bold(truck_class))
 	)
 
 
-def _get_above_10_rate(cards, destination, truck_class, delivery_date):
+def _get_above_10_row(card_name, destination_key, customer_field, transporter_field):
+	rows = frappe.get_all(
+		"Transport Rate",
+		filters={"parent": card_name, "parenttype": "Transport Rate Card"},
+		fields=["name", "distance_band", "from_km", "to_km", "location", customer_field, transporter_field],
+		order_by="idx asc",
+	)
+	for row in rows:
+		if (row.location or "").strip().casefold() == destination_key:
+			return row
+	return None
+
+
+def _get_above_10_rate(cards, destination, truck_class, delivery_date, transporter=None):
 	destination_key = destination.strip().casefold()
 	customer_field, transporter_field = TRUCK_RATE_FIELDS[truck_class]
 	for card in cards:
-		rows = frappe.get_all(
-			"Transport Rate",
-			filters={"parent": card.name, "parenttype": "Transport Rate Card"},
-			fields=["name", "distance_band", "from_km", "to_km", "location", customer_field, transporter_field],
-			order_by="idx asc",
-		)
-		for row in rows:
-			if (row.location or "").strip().casefold() != destination_key:
-				continue
-			customer_rate = flt(row.get(customer_field))
-			transporter_rate = flt(row.get(transporter_field))
-			if not customer_rate or not transporter_rate:
-				frappe.throw(
-					_("Rates for {0} and {1} are missing on rate card {2}.").format(
-						frappe.bold(destination),
-						frappe.bold(truck_class),
-						frappe.bold(card.name),
-					)
-				)
-			return frappe._dict(
-				rate_card=card.name,
-				rate_row=row.name,
-				distance_band=row.distance_band,
-				rate_unit="Per KG",
-				customer_rate=customer_rate,
-				transporter_rate=transporter_rate,
+		row = _get_above_10_row(card.name, destination_key, customer_field, transporter_field)
+		if not row:
+			continue
+
+		customer_rate = flt(row.get(customer_field))
+		transporter_rate = flt(row.get(transporter_field))
+		if customer_rate and not transporter_rate:
+			transporter_rate = _get_shared_transporter_rate(
+				cards,
+				transporter,
+				card.name,
+				lambda other: (
+					_get_above_10_row(other.name, destination_key, customer_field, transporter_field) or {}
+				).get(transporter_field),
 			)
+		if not customer_rate or not transporter_rate:
+			frappe.throw(
+				_("Rates for {0} and {1} are missing on rate card {2}.").format(
+					frappe.bold(destination),
+					frappe.bold(truck_class),
+					frappe.bold(card.name),
+				)
+			)
+		return frappe._dict(
+			rate_card=card.name,
+			rate_row=row.name,
+			distance_band=row.distance_band,
+			rate_unit="Per KG",
+			customer_rate=customer_rate,
+			transporter_rate=transporter_rate,
+		)
 
 	frappe.throw(
 		_("No submitted above-10 route rate was found for {0}, {1}, on {2}.").format(

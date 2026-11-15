@@ -21,6 +21,10 @@ or transporter has a special rate, create another submitted card for the same ma
 set that Customer and/or Transporter. During delivery entry, the app automatically uses
 the most specific matching card first.
 
+A customer-specific card may hold customer rates only. Leave its transporter rates blank
+and each delivery takes the transporter rate from the general card (or a
+transporter-specific card, if one exists), so transporter rates are maintained in one place.
+
 Each **Transport Delivery** is one trip. The Transport Delivery document ID is the main audit reference used on linked invoices. The delivery stores the truck class, optional destination/route note, optional weight, selected customer rate, selected transporter rate, customer amount, transporter amount, and margin. For above-10-tonne trips it also requires destination and actual distance KM.
 
 When a delivery is saved, choose the **Rate Category**:
