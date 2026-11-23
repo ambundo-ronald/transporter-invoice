@@ -25,6 +25,13 @@ ABOVE_10_CAPACITY_KG = {
 	"14 MT": 15000,
 	"Trailer": 28000,
 }
+# Customers are charged for at least the truck's rated load, even when it carries
+# less. Transporters are always paid on the actual weight.
+ABOVE_10_CUSTOMER_MIN_CHARGE_KG = {
+	"10 MT": 10000,
+	"14 MT": 14000,
+	"Trailer": 28000,
+}
 ABOVE_10_TRUCK_CLASSES = set(TRUCK_RATE_FIELDS)
 ABOVE_10_HEADER_TRUCK_CLASSES = ABOVE_10_TRUCK_CLASSES | {"Mixed"}
 
@@ -252,7 +259,7 @@ class TransportDelivery(Document):
 			row.distance_band = rate.distance_band
 			row.customer_rate = rate.customer_rate
 			row.transporter_rate = rate.transporter_rate
-			row.customer_amount = flt(rate.customer_rate) * flt(row.weight_kg)
+			row.customer_amount = flt(rate.customer_rate) * get_customer_chargeable_weight(row.truck_class, row.weight_kg)
 			row.transporter_amount = flt(rate.transporter_rate) * flt(row.weight_kg)
 			self.customer_amount += flt(row.customer_amount)
 			self.transporter_amount += flt(row.transporter_amount)
@@ -653,7 +660,9 @@ def append_transport_invoice_items(invoice, delivery, item_code, cost_center, is
 					"item_code": item_code,
 					"qty": 1,
 					"rate": amount,
-					"description": get_above_10_trip_description(delivery, row, include_reference=include_reference),
+					"description": get_above_10_trip_description(
+						delivery, row, include_reference=include_reference, is_sales=is_sales
+					),
 					"cost_center": cost_center,
 				},
 			)
@@ -745,18 +754,27 @@ def get_invoice_item_description(delivery, include_reference=False):
 	)
 
 
-def get_above_10_trip_description(delivery, row, include_reference=False):
+def get_above_10_trip_description(delivery, row, include_reference=False, is_sales=False):
 	prefix = _("{0}: ").format(delivery.name) if include_reference else ""
 	if include_reference and delivery.delivery_reference:
 		prefix += _("Ref {0}: ").format(delivery.delivery_reference)
 	vehicle = row.get("truck_no") or delivery.vehicle_registration or "-"
-	return prefix + _("Transport to {0}; band {1}; truck {2}; weight {3} KG; rate charged per KG; vehicle {4}").format(
+	weight_text = _("weight {0} KG").format(flt(row.weight_kg))
+	chargeable_weight = get_customer_chargeable_weight(row.truck_class, row.weight_kg)
+	if is_sales and chargeable_weight > flt(row.weight_kg):
+		weight_text += _("; charged at {0} minimum {1} KG").format(row.truck_class, chargeable_weight)
+	return prefix + _("Transport to {0}; band {1}; truck {2}; {3}; rate charged per KG; vehicle {4}").format(
 		row.destination or "-",
 		row.distance_band or "-",
 		row.truck_class or "-",
-		flt(row.weight_kg),
+		weight_text,
 		vehicle,
 	)
+
+
+def get_customer_chargeable_weight(truck_class, weight_kg):
+	"""Weight the customer pays for: the actual weight, but never below the truck's minimum."""
+	return max(flt(weight_kg), flt(ABOVE_10_CUSTOMER_MIN_CHARGE_KG.get(truck_class)))
 
 
 def get_under_10_trip_description(delivery, row, include_reference=False):
@@ -780,7 +798,7 @@ def get_under_10_trip_description(delivery, row, include_reference=False):
 
 def get_customer_invoice_quantity(delivery):
 	if delivery.rate_category == "10 Tonnes and Above":
-		return flt(delivery.actual_weight_kg)
+		return get_customer_chargeable_weight(delivery.truck_class, delivery.actual_weight_kg)
 	if delivery.rate_category == "Under 10 Tonnes":
 		return 1
 	return get_invoice_quantity(delivery)
@@ -869,3 +887,74 @@ def get_delivery_location_summary(delivery_name):
 				seen.add(key)
 				locations.append(location)
 	return ", ".join(locations)
+
+
+@frappe.whitelist()
+def apply_customer_minimum_charge(delivery_name):
+	"""Recalculate customer amounts on a submitted above-10 delivery using the truck minimum.
+
+	Use this for deliveries submitted before the minimum chargeable weight was introduced.
+	Transporter amounts are not changed. The delivery must not have an active Sales Invoice;
+	delete the draft (or cancel the submitted) invoice first, then create it again afterwards.
+
+	bench --site <site> execute transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery.apply_customer_minimum_charge --kwargs "{'delivery_name': 'TD-...'}"
+	"""
+	frappe.only_for(("Accounts Manager", "System Manager"))
+	frappe.db.sql("select name from `tabTransport Delivery` where name = %s for update", delivery_name)
+	delivery = frappe.get_doc("Transport Delivery", delivery_name)
+	if delivery.docstatus != 1:
+		frappe.throw(_("Only submitted deliveries need this. Save a draft delivery to recalculate it."))
+	if delivery.rate_category != "10 Tonnes and Above" or not delivery.get("above_10_trips"):
+		frappe.throw(_("The minimum charge applies only to 10 Tonnes and Above deliveries with trip rows."))
+	if delivery.sales_invoice:
+		docstatus = frappe.db.get_value("Sales Invoice", delivery.sales_invoice, "docstatus")
+		if docstatus is not None and cint(docstatus) != 2:
+			frappe.throw(
+				_("Delete or cancel Sales Invoice {0} before recalculating this delivery.").format(
+					frappe.bold(delivery.sales_invoice)
+				)
+			)
+
+	old_amount = flt(delivery.customer_amount)
+	customer_amount = 0
+	for row in delivery.above_10_trips:
+		row_amount = flt(row.customer_rate) * get_customer_chargeable_weight(row.truck_class, row.weight_kg)
+		row.db_set("customer_amount", row_amount, update_modified=False)
+		customer_amount += row_amount
+
+	if abs(customer_amount - old_amount) < 0.005:
+		return customer_amount
+
+	delivery.db_set(
+		{
+			"customer_amount": customer_amount,
+			"margin": customer_amount - flt(delivery.transporter_amount),
+		},
+		update_modified=False,
+	)
+	_refresh_billing_batch_amounts(delivery.name, customer_amount)
+	delivery.add_comment(
+		"Info",
+		_("Customer amount recalculated with the truck minimum charge: {0} to {1}.").format(
+			frappe.format_value(old_amount, {"fieldtype": "Currency"}),
+			frappe.format_value(customer_amount, {"fieldtype": "Currency"}),
+		),
+	)
+	return customer_amount
+
+
+def _refresh_billing_batch_amounts(delivery_name, customer_amount):
+	rows = frappe.get_all(
+		"Transport Billing Delivery",
+		filters={"transport_delivery": delivery_name, "parenttype": "Transport Billing Batch"},
+		fields=["name", "parent"],
+	)
+	for row in rows:
+		frappe.db.set_value("Transport Billing Delivery", row.name, "customer_amount", customer_amount, update_modified=False)
+	for batch_name in {row.parent for row in rows}:
+		total = frappe.db.sql(
+			"""select coalesce(sum(customer_amount), 0) from `tabTransport Billing Delivery`
+			where parent = %s and parenttype = 'Transport Billing Batch'""",
+			batch_name,
+		)[0][0]
+		frappe.db.set_value("Transport Billing Batch", batch_name, "total_customer_amount", total, update_modified=False)

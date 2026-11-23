@@ -45,6 +45,27 @@ margin = customer amount - transporter amount
 If the rate card is **Fixed Trip Amount**, invoice quantity is `1` and the rates are used
 as full trip amounts. Under-10-tonne rate cards are forced to fixed trip amount.
 
+## Minimum Chargeable Weight (10 Tonnes and Above)
+
+Customers are charged for at least the rated load of the truck class, even when it
+carries less. Transporters are always paid on the actual weight.
+
+| Truck class | Minimum the customer pays for |
+|---|---|
+| 10 MT | 10,000 KG |
+| 14 MT | 14,000 KG |
+| Trailer | 28,000 KG |
+
+Example: a 10 MT trip of 8,382 KG at 1.82 is charged 10,000 x 1.82 = 18,200 to the
+customer, and the transporter is paid 8,382 x their rate.
+
+Deliveries submitted before this rule keep their old amounts. To recalculate one, delete
+or cancel its Sales Invoice, then run:
+
+```bash
+bench --site your-site execute transporter_invoice.transport_invoicing.doctype.transport_delivery.transport_delivery.apply_customer_minimum_charge --kwargs "{'delivery_name': 'TD-...'}"
+```
+
 ## Monthly Billing Model
 
 Use this flow when the customer is billed once per month:
