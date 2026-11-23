@@ -8,6 +8,8 @@ from transporter_invoice.transport_invoicing.doctype.transport_delivery.transpor
 	_get_above_10_rate,
 	_get_under_10_rate,
 	append_transport_invoice_items,
+	get_above_10_trip_description,
+	get_customer_chargeable_weight,
 	get_above_10_truck_class,
 	get_customer_invoice_quantity,
 	get_invoice_item_quantity,
@@ -398,3 +400,40 @@ class TestTransportDelivery(FrappeTestCase):
 		card.customer = None
 		with self.assertRaises(frappe.ValidationError):
 			card._validate_rates()
+
+	def test_customer_is_charged_at_least_the_truck_minimum(self):
+		self.assertEqual(get_customer_chargeable_weight("10 MT", 8382), 10000)
+		self.assertEqual(get_customer_chargeable_weight("10 MT", 10800), 10800)
+		self.assertEqual(get_customer_chargeable_weight("14 MT", 11500), 14000)
+		self.assertEqual(get_customer_chargeable_weight("14 MT", 14900), 14900)
+		self.assertEqual(get_customer_chargeable_weight("Trailer", 20000), 28000)
+
+	def test_minimum_charge_applies_to_customer_amount_only(self):
+		delivery = frappe.new_doc("Transport Delivery")
+		delivery.company = "_Test Company"
+		delivery.customer = "_Test Customer"
+		delivery.transporter = "_Test Supplier"
+		delivery.delivery_date = nowdate()
+		delivery.rate_category = "10 Tonnes and Above"
+		delivery.truck_class = "10 MT"
+		delivery.append("above_10_trips", {"destination": "Nairobi, Industrial Area", "weight_kg": 8382, "truck_class": "10 MT"})
+		rate = frappe._dict(
+			rate_card="CARD", rate_row="ROW", distance_band="51-100Kms", customer_rate=1.82, transporter_rate=1.2
+		)
+
+		with patch(f"{DELIVERY_MODULE}.get_applicable_rate", return_value=rate):
+			delivery._apply_above_10_trip_rates()
+
+		self.assertAlmostEqual(delivery.customer_amount, 18200)
+		self.assertAlmostEqual(delivery.transporter_amount, 10058.4)
+		self.assertAlmostEqual(delivery.margin, 8141.6)
+
+	def test_sales_description_shows_minimum_charge(self):
+		delivery = frappe._dict(name="TD-1", delivery_reference=None, vehicle_registration="KAA 1")
+		row = frappe._dict(destination="Nakuru", distance_band="151-200Kms", truck_class="10 MT", weight_kg=8382)
+
+		sales = get_above_10_trip_description(delivery, row, is_sales=True)
+		purchase = get_above_10_trip_description(delivery, row, is_sales=False)
+
+		self.assertIn("charged at 10 MT minimum 10000", sales)
+		self.assertNotIn("minimum", purchase)
